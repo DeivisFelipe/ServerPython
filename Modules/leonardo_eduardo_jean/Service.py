@@ -1,3 +1,5 @@
+import os
+
 from scapy.all import rdpcap
 from scapy.layers.inet import IP
 from Modules.leonardo_eduardo_jean.Ipv4Packet import IPv4Packet
@@ -6,7 +8,8 @@ class Service:
 
     def read_ipv4_from_file(self):
         # Ler pacotes
-        packets = rdpcap("./pcaps/trabalho1.pcapng")
+        directory = os.path.dirname(os.path.abspath(__file__))
+        packets = rdpcap(f"{directory}/../../pcaps/trabalho1.pcapng")
 
         # Limitar a quantidade de pacotes lidos para evitar utilização total da API de Geolocation
         packets = packets[:100]
@@ -33,3 +36,11 @@ class Service:
                 ipv4_packets.append(ipv4_packet)
 
         return ipv4_packets
+
+    def read_arp_from_file(self):
+        directory = os.path.dirname(os.path.abspath(__file__))
+        print(f"{directory}/pcaps/trabalho2.pcapng")
+        packets = rdpcap(f"{directory}/pcaps/trabalho2.pcapng")
+
+        print(packets)
+

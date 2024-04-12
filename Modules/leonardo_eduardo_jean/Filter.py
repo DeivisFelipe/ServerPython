@@ -33,3 +33,9 @@ def FilterIpv4(packets):
     report["ips"].append({"tipo": "IP destino privado", "quantidade": private_dst_ips})
 
     return report
+
+
+
+def FilterARP(packets):
+    pass
+

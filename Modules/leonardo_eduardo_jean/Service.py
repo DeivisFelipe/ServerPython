@@ -1,8 +1,8 @@
 import os
 
-from dpkt.arp import ARP
 from scapy.all import rdpcap
 from scapy.layers.inet import IP
+from scapy.layers.l2 import ARP
 from Modules.leonardo_eduardo_jean.Ipv4Packet import IPv4Packet
 from Modules.leonardo_eduardo_jean.ArpPacket import ArpPacket
 
@@ -42,7 +42,6 @@ class Service:
     def read_arp_from_file(self):
         directory = os.path.dirname(os.path.abspath(__file__))
         pcap_path = f"{directory}/../../pcaps/trabalho2.pcap"
-        print(pcap_path)
 
         packets = rdpcap(pcap_path)
         arp_packets = []

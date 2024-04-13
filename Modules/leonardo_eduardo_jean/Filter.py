@@ -1,3 +1,5 @@
+import requests
+
 def FilterIpv4(packets):
     report = {"localizacao": [], "ips": []}
     public_src_ips = 0
@@ -34,8 +36,37 @@ def FilterIpv4(packets):
 
     return report
 
-
-
 def FilterARP(packets):
-    pass
+    report = []
+    macAdressList = []
+
+    for packet in packets:
+        if packet.hardware_src not in macAdressList:
+            macAdressList.append(packet.hardware_src)
+        if packet.hardware_dst not in macAdressList:
+            macAdressList.append(packet.hardware_dst)
+
+
+    for macAdress in macAdressList:
+        url = f"https://api.macvendors.com/{macAdress}"
+
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            vendor = response.text
+            found = False
+
+            for item in report:
+                if item['fabricante'] == vendor:
+                    item['quantidade'] += 1
+                    found = True
+                    break
+
+            if not found:
+                report.append({"fabricante": vendor, "quantidade": 1})
+
+    return report
+
+
+
 

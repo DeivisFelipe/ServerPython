@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuição de Ips e mapa</title>
+
+    <script src="
+        https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js
+        "></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #map {
+            height: 180px;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-r from-cyan-500 to-blue-500">
+
+   <div class="bg-slate-300 m-7">
+    <div class="w-full mt-10 mx-auto">
+      <div class="border-2 border-black">
+          <h1 class="text-xl">Gráfico de Fabricantes</h1>
+        <div id="main" style="width: 100%;height:400px;margin:2rem;"></div>
+      </div>
+    </div>
+  </div>
+    <script type="text/javascript">
+        let dataJSON;
+        // Função que faz a requisição fetch para o servidor
+        async function getAnalise() {
+            url = "http://localhost:3001/leonardo_eduardo_jean/arp"
+            const response = await fetch(url);
+            return await response.json();
+        }
+
+        // Função principal, precisa dela para esperar a função getAnalise terminar
+        async function main() {
+            dataJSON = await getAnalise();
+            // Pega o elemento HTML onde o gráfico será exibido
+            var grafico = echarts.init(document.getElementById('main'));
+            var option = {
+                title: {
+                    text: 'Distribuição de fabricantes',
+                    subtext: 'Número de requisições por fabricante',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left'
+                },
+                series: [
+                    {
+                    name: 'Access From',
+                    type: 'pie',
+                    radius: '50%',
+                    data:
+                        dataJSON.map((ip) => {
+                            return { value: ip.quantidade, name: ip.fabricante }
+                        })
+                        ,
+                    emphasis: {
+                        itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                    }
+                ]
+            };
+
+            // Mostra o gráfico e seta as opções
+            grafico.setOption(option);
+        }
+        main();
+    </script>
+</body>
+
+</html>

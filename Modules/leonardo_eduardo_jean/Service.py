@@ -75,7 +75,7 @@ class Service:
         for pkt in packets:
             rip_layer = pkt.getlayer(RIP)
             rip_payload = rip_layer.payload
-            entry = RipPacket(rip_payload.AF, rip_payload.RouteTag, rip_payload.addr, rip_payload.mask, rip_payload.nextHop, rip_payload.metric)
+            entry = RipPacket(rip_payload.AF, rip_payload.RouteTag, rip_payload.addr, rip_payload.mask, rip_payload.nextHop, rip_payload.metric, rip_payload.time)
             rip_packets.append(entry)
 
         return rip_packets

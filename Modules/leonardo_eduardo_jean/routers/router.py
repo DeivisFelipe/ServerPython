@@ -21,5 +21,9 @@ async def get_arp_packet():
 @router.get("/rip")
 async def get_rip_packet():
     packets = service.read_rip_from_file()
-    #report = FilterRIP(packets)
+    return packets
+
+@router.get("/udp")
+async def get_udp_packet():
+    packets = service.read_udp_from_file()
     return packets

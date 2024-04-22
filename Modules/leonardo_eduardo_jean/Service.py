@@ -1,13 +1,14 @@
 import os
 
 from scapy.all import *
-from scapy.layers.inet import IP
+from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import ARP
 from scapy.layers.rip import RIP
 
 from Modules.leonardo_eduardo_jean.Ipv4Packet import IPv4Packet
 from Modules.leonardo_eduardo_jean.ArpPacket import ArpPacket
 from Modules.leonardo_eduardo_jean.RipPacket import RipPacket
+from Modules.leonardo_eduardo_jean.UdpPacket import UdpPacket
 
 
 class Service:
@@ -72,13 +73,27 @@ class Service:
         packets = rdpcap(pcap_path)
         rip_packets = []
 
-        for pkt in packets:
-            rip_layer = pkt.getlayer(RIP)
+        for packet in packets:
+            rip_layer = packet.getlayer(RIP)
             rip_payload = rip_layer.payload
             entry = RipPacket(rip_payload.AF, rip_payload.RouteTag, rip_payload.addr, rip_payload.mask, rip_payload.nextHop, rip_payload.metric, rip_payload.time)
             rip_packets.append(entry)
 
         return rip_packets
+
+    def read_udp_from_file(self):
+        directory = os.path.dirname(os.path.abspath(__file__))
+        pcap_path = f"{directory}/../../pcaps/trabalho4.pcap"
+
+        packets = rdpcap(pcap_path)
+        udp_packets = []
+
+        for packet in packets:
+            if UDP in packet:
+                packetEntry = packet[UDP]
+                udp_packet = UdpPacket(packetEntry.sport, packetEntry.dport, packetEntry.len, packetEntry.chksum)
+                udp_packets.append(udp_packet)
+        return udp_packets
 
 
 

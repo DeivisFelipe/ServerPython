@@ -23,6 +23,7 @@ def int_to_ip4(addr: int) -> str:
 
 
 class Packet:
+    ts: float = 0.
     uniqueId: uuid.UUID = None
 
     '''
@@ -42,18 +43,37 @@ class Packet:
     def __init__(self):
         self.uniqueId = uuid.uuid4()
 
+    def setTimestamp(pkg: 'Packet' | List['Packet'], ts):
+        if type(pkg) == list:
+            for i in pkg:
+                Packet.setTimestamp(i, ts)
+        else:
+            pkg.ts = ts
+
     def convert(pkg) -> 'Packet' | List['Packet'] | None:
         '''
         Converte o esquema de pacote do dpkt para IPPacket
         '''
         if isinstance(pkg, dpkt.ip.IP):
-            return IPPacket.convert(pkg)
+            pkgs: 'Packet' | List['Packet'] = IPPacket.convert(pkg)
+            Packet.setTimestamp(pkgs, Packet.ts)
+            return pkgs
         elif isinstance(pkg, dpkt.ip6.IP6):
-            return IP6Packet.convert(pkg)
+            pkgs: 'Packet' | List['Packet'] = IP6Packet.convert(pkg)
+            Packet.setTimestamp(pkgs, Packet.ts)
+            return pkgs
         elif isinstance(pkg, dpkt.arp.ARP):
-            return ARPPacket.convert(pkg)
+            pkgs: 'Packet' | List['Packet'] = ARPPacket.convert(pkg)
+            Packet.setTimestamp(pkgs, Packet.ts)
+            return pkgs
         elif isinstance(pkg, dpkt.udp.UDP):
-            return UDPPacket.convert(pkg)
+            pkgs: 'Packet' | List['Packet'] = UDPPacket.convert(pkg)
+            Packet.setTimestamp(pkgs, Packet.ts)
+            return pkgs
+        elif isinstance(pkg, dpkt.tcp.TCP):
+            pkgs: 'Packet' | List['Packet'] = TCPPacket.convert(pkg)
+            Packet.setTimestamp(pkgs, Packet.ts)
+            return pkgs
         else:
             print("Tipo de pacote não tratado! Tipo:" + str(type(pkg)))
             return None
@@ -233,8 +253,7 @@ class IP6Packet(Packet):
 
 class RIPPacket(Packet):
     command: int
-    metrics: List[Dict[str, Any]] | None= []
-
+    metrics: List[Dict[str, Any]] | None = []
 
     def __init__(self):
         self.metrics = []
@@ -247,7 +266,6 @@ class RIPPacket(Packet):
         pkt.command = rip.cmd
 
         for item in rip.rtes:
-
             pkt.metrics.append(
                 {"address": int_to_ip4(item.addr),
                  "mask": int_to_ip4(item.subnet),
@@ -286,6 +304,59 @@ class UDPPacket(Packet):
         data: Packet | List[Packet] | None = None
         if packet.dstPort == 520:
             data = RIPPacket.convert(pkt.data)
+        if data is not None:
+            if type(data) == list:
+                packet.payload = data[0].uniqueId
+                packet.setInternalPDU(data[0])
+                data[0].setExternalPDU(packet)
+                return [packet, *data]
+            else:
+                packet.payload = data.uniqueId
+                packet.setInternalPDU(data)
+                data.setExternalPDU(packet)
+                return [packet, data]
+
+        return packet
+
+
+class TCPPacket(Packet):
+    '''
+    Classe para encapsular dpkt.tcp.TCP e printar
+    certinho na fastAPI
+    '''
+
+    srcIp: str
+    dstIp: str
+    srcPort: int
+    dstPort: int
+    seq: int
+    ack: int
+    data_offset: int
+    flags: int
+    window: int
+    checksum: int
+    urgent_pointer: int
+
+    def convert(pkt: dpkt.tcp.TCP) -> 'TCPPacket' | List[Packet]:
+        packet = TCPPacket()
+
+        packet.dstPort = pkt.dport
+        packet.srcPort = pkt.sport
+        packet.seq = pkt.seq
+        packet.ack = pkt.ack
+        packet.data_offset = pkt.off
+        packet.flags = pkt.flags
+        packet.window = pkt.win
+        packet.checksum = pkt.sum
+        packet.urgent_pointer = pkt.urp
+
+        data: Packet | List[Packet] | None = None
+        if packet.dstPort == 80:
+            # data = HTTPPacket.convert(pkt.data)
+            pass
+        elif packet.dstPort == 53:
+            # data = DNSPacket.convert(pkt.data) # FIXME Há necessidade de analisar DNS sobre UDP?
+            pass
         if data is not None:
             if type(data) == list:
                 packet.payload = data[0].uniqueId
@@ -340,10 +411,10 @@ class PacketSource:
             eth = dpkt.ethernet.Ethernet(buf)
             if eth.type == ETH_TYPE_IPv4 or eth.type == ETH_TYPE_IPv6:
                 ip = eth.data
-                packets.append(ip)
+                packets.append((ts, ip))
             elif eth.type == ETH_TYPE_ARP:
                 arp = eth.data
-                packets.append(arp)
+                packets.append((ts, arp))
             else:
                 print("Ethernet type não tratado.")
 
@@ -361,7 +432,8 @@ class PacketSource:
         for arquivo in arquivos:
             print("Lendo arquivo: ", arquivo)
             packets = self.readPackets(f'./pcaps/{arquivo}')
-            for packet in packets:
+            for ts, packet in packets:
+                Packet.ts = ts  # Os pacotes usarão esta variavel estatica para definir seu timestamp
                 pkt: Packet | List[Packet] = Packet.convert(packet)
                 if pkt is None:
                     # print("um pacote nao foi convertido")

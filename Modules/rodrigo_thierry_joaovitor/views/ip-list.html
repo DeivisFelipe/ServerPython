@@ -18,6 +18,22 @@
 
 <!--- NAVBAR-->
 <nav class="navbar navbar-expand-lg navbar-black bg-black sticky-top">
+
+    <script>
+            fetch('./ip-graph.html')
+      .then(function(response) {
+        return response.text();
+      })
+      .then(function(body) {
+        document.querySelector('#div').innerHTML = body;
+      });
+    </script>
+
+    <div id="#div">
+
+    </div>
+
+
     <div class="container-fluid">
         <a class="navbar-brand" href="#">Redes de Computadores</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -37,6 +53,9 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="./udp-list.html">Trabalho 4 - UDP</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="./tcp-list.html">Trabalho 5 - TCP</a>
                 </li>
             </ul>
         </div>

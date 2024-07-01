@@ -13,12 +13,13 @@ def get_enviados_list():
 @router.get("/enviados/{ip}")
 def get_enviados(ip: str):
     output = [packet for packet in src.allPackets if isinstance(packet, IPPacket) and packet.sourceIp == ip]
-    return output
+    return output.sort()
 
 
 @router.get('/recebidos/list')
 def get_recebidos_list():
-    output = {packet.destinationIp for packet in src.allPackets if isinstance(packet, IPPacket)}
+    output = [packet.destinationIp for packet in src.allPacketsDict[IPPacket]]
+    output.sort()
     return output
 
 @router.get("/recebidos/{ip}")

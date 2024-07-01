@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="udp.css">
+    <!--<link rel="stylesheet" href="udp.css">-->
 
     <script src="
         https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js
@@ -56,31 +56,66 @@
         <!--- SIDEBAR -->
         <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar overflow-y-auto position-sticky">
             <ul class="nav navbar-nav flex-column list-unistyled" id="sidebar_ul">
-                <li class="nav-link active" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab"
-                    aria-controls="nav-home" aria-selected="true">
-                    Gráfico de Serviços
-                </li>
+
             </ul>
 
         </nav>
 
 
-        <!--- LISTA DE PACOTES -->
-        <div class="col-9 tab-content" id="headers_">
-            <h1 class="bd-title"> Tráfico UDP</h1>
-            <p>O grafo abaixo mostra o tráfico UDP, cada vértice representa uma porta udp, as arestas direcionadas indicam o sentido da comunicação. Arestas de mesma cor representam um mesmo endereço ip de origem. O tamanho das arestas é relativo ao número de pacotes recebidos pela porta correspondente.</p>
-            <p>Observando o gráfico percebe-se que o ip 192.168.124.94 está sobrecarregando a rede.</p>
-            <div id="graph" style="width: 1000px;height:1000px;"></div>
-            <div class="row mx-auto py-2 flexbox mg-3" id="headers">
+        <div class="col">
 
+            <form class="form-inline" onsubmit="submiter(); return false;">
+
+                <div class="form-group mb-2 mr-2">
+                    <label for="ipv4_selectc" class="sr-only">Conexão</label>
+                    <select class="form-control" id="ipv4_selectc" required></select>
+                </div>
+
+                <button type="submit" class="btn btn-primary mb-2">Submit</button>
+            </form>
+
+
+            <div class="row">
+                <div class="col">
+                    <h2>Number of Packets</h2>
+                    <div id="n_pkt_chart" style="width: 500px; height: 400px;"></div>
+                </div>
+                <div class="col">
+                    <h2>Window Size Over Time</h2>
+                    <div id="w_size_chart" style="width: 500px; height: 400px;"></div>
+                </div>
             </div>
+
+
+            <div class="row">
+
+                <div class="col">
+                    <h2>Payload Size Over Time</h2>
+                    <div id="payload_size_chart" style="width: 600px; height: 400px;"></div>
+                </div>
+                <div class="col">
+                    <h2>TCP Port Services</h2>
+                    <table class="table table-bordered" id="ports_table">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>IP</th>
+                            <th>Source Port</th>
+                            <th>Destination Port</th>
+                            <th>Service</th>
+                        </tr>
+                        </thead>
+                        <tbody id="ports_table_body">
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-            crossorigin="anonymous"></script>
-    <script src="udp.js"></script>
+
+    <script src="tcp.js"></script>
 </div>
 </body>
 

@@ -36,7 +36,6 @@ async function fetchService(port) {
             .then(text => text.json());
 
 
-
         return response[0].description;
     } catch (error) {
         console.error(`Error fetching service for port ${port}:`, error);
@@ -104,7 +103,9 @@ function submiter() {
             var n_pkt_chart = echarts.init(document.getElementById('n_pkt_chart'));
             var n_pkt_option = {
                 title: {
-                    text: 'Number of Packets'
+                    text: 'Número de Pacotes',
+                    left: 'center',
+                    top: '10%'  // Ajustar a posição do título
                 },
                 tooltip: {},
                 xAxis: {
@@ -114,8 +115,11 @@ function submiter() {
                 yAxis: {
                     type: 'value'
                 },
+                legend: {
+                    show: false  // Ocultar a legenda
+                },
                 series: [{
-                    name: 'Packets',
+                    name: 'Pacotes',
                     type: 'bar',
                     data: ips.map(ip => data[ip].n_pkt)
                 }]
@@ -126,11 +130,12 @@ function submiter() {
             var w_size_chart = echarts.init(document.getElementById('w_size_chart'));
             var w_size_option = {
                 title: {
-                    text: 'Window Size Over Time'
+                    text: 'Tamanho da Janela ao Longo do Tempo\n'
                 },
                 tooltip: {},
                 legend: {
-                    data: ips
+                    data: ips,
+                    top: 'bottom'
                 },
                 xAxis: {
                     type: 'value',
@@ -151,15 +156,16 @@ function submiter() {
             var payload_size_chart = echarts.init(document.getElementById('payload_size_chart'));
             var payload_size_option = {
                 title: {
-                    text: 'Payload Size Over Time'
+                    text: 'Tamanho de Payload ao Longo do Tempo'
                 },
                 tooltip: {},
                 legend: {
-                    data: ips
+                    data: ips,
+                    top: 'bottom'
                 },
                 xAxis: {
                     type: 'value',
-                    name: 'Time (s)'
+                    name: 'Tempo (s)'
                 },
                 yAxis: {
                     type: 'value'

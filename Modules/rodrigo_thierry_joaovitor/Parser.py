@@ -74,6 +74,12 @@ class Packet:
             pkgs: 'Packet' | List['Packet'] = TCPPacket.convert(pkg)
             Packet.setTimestamp(pkgs, Packet.ts)
             return pkgs
+        elif isinstance(pkg, dpkt.http.Request) or isinstance(pkg, dpkt.http.Response):
+            pkgs: 'Packet' | List['Packet'] = HTTPPacket.convert(pkg)
+            Packet.setTimestamp(pkgs, Packet.ts)
+            return pkgs
+        elif isinstance(pkg, dpkt.icmp.ICMP) or isinstance(pkg, dpkt.igmp.IGMP):
+            return None
         else:
             print("Tipo de pacote não tratado! Tipo:" + str(type(pkg)))
             return None
@@ -352,8 +358,15 @@ class TCPPacket(Packet):
 
         data: Packet | List[Packet] | None = None
         if packet.dstPort == 80:
-            # data = HTTPPacket.convert(pkt.data)
-            pass
+            if pkt.data is not None and len(pkt.data) > 0 and pkt.data != b'':
+                try:
+                    data = HTTPPacket.convert(dpkt.http.Request(pkt.data))
+                except Exception as e:
+                    print ("Nao consegui request", e)
+                    try:
+                        data = HTTPPacket.convert(dpkt.http.Response(pkt.data))
+                    except Exception as f:
+                        print("Nao consegui response", f)
         elif packet.dstPort == 53:
             # data = DNSPacket.convert(pkt.data) # FIXME Há necessidade de analisar DNS sobre UDP?
             pass
@@ -371,6 +384,41 @@ class TCPPacket(Packet):
 
         return packet
 
+
+class HTTPPacket(Packet):
+    '''
+    Classe para encapsular pacotes HTTP
+    '''
+
+    isReponse: bool
+    status: int
+    method: str
+    uri: str
+    version: str
+    headers: Dict[str, str]
+    body: str
+
+    def convert(pkt: dpkt.http.Request | dpkt.http.Response) -> 'HTTPPacket':
+
+        if not isinstance(pkt, dpkt.http.Request) and not isinstance(pkt, dpkt.http.Response):
+            print("Tentando converter um pacote HTTP que não é HTTP(", type(pkt), ")")
+            return None
+
+        packet = HTTPPacket()
+        packet.isReponse = isinstance(pkt, dpkt.http.Response)
+        packet.version = pkt.version
+        packet.headers = pkt.headers
+        packet.body = pkt.body
+        if packet.isReponse:
+            packet.status = pkt.status
+            print("HTTPPacket", packet.status, "convertido")
+        else:
+            packet.method = pkt.method
+            packet.status = 0
+            packet.uri = pkt.uri
+            print("HTTPPacket", packet.method, "convertido")
+
+        return packet
 
 class PacketSource:
     '''
@@ -455,13 +503,12 @@ class PacketSource:
                     for pkt_unit in pkt:
                         self.packetData[pkt_unit.uniqueId] = packet.data
                         output.append(pkt_unit)
-
+            print(arquivo, "tinha um total de", len(packets), "pacotes")
         print("li um total de", len(output), "pacotes")
         return output, outputDict
 
     def __init__(self):
         self.packetData = {}
         self.allPackets, self.allPacketsDict = self.readAll()
-
 
 packetSource = PacketSource()

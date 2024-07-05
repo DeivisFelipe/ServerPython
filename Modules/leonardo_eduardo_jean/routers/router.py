@@ -27,3 +27,23 @@ async def get_rip_packet():
 async def get_udp_packet():
     packets = service.read_udp_from_file()
     return packets
+
+@router.get("/tcp")
+async def get_tcp_packet():
+    packets = service.read_tcp_from_file()
+    return packets
+
+@router.get("/http")
+async def get_http_packet():
+    packets = service.read_http_from_file()
+    return packets
+
+@router.get("/dns")
+async def get_dns_packet():
+    packets = service.read_dns_from_file()
+    return packets
+
+@router.get("/snmp")
+async def get_snmp_packet():
+    packets = service.read_snmp_from_file()
+    return packets

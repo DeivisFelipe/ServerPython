@@ -423,6 +423,7 @@ class HTTPPacket(Packet):
 
         return packet
 
+
 class PacketSource:
     '''
     Classe que junta logica de captura e leitura de pacotes.

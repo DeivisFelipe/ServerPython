@@ -1,57 +1,57 @@
 function transformToTree(data) {
-    const transform = (obj) => {
-        return Object.keys(obj).map(key => ({
-            name: key,
-            children: transform(obj[key])
-        }));
-    };
-    return {
-        name: 'Root',
-        children: transform(data)
-    };
+    function createNode(name, data, parentName) {
+        fullname = parentName;
+        let node = {
+            name: name,
+            fullname: fullname,
+            children: []
+        };
+        for (let key in data) {
+            node.children.push(createNode(key, data[key], fullname));
+        }
+        return node;
+    }
+    
+    return createNode('', data, '');
 }
 
-fetch('http://localhost:3001/grupo_rodrigo_thierry_joao/snmp/oids')
+
+let root;
+function createTreeList(node, parentElement) {
+    let li = document.createElement('li');
+    li.textContent = node.name;
+    li.title = node.fullname;
+    li.className = 'MYli';
+
+    li.onclick = function(event) {
+        event.stopPropagation();
+        let children = li.querySelector('ul');
+        if (children) {
+            children.style.display = children.style.display === 'none' ? 'block' : 'none';
+        }
+    };
+
+    if (node.children.length > 0) {
+        let ul = document.createElement('ul');
+        ul.className = 'MYul';
+        node.children.forEach(child => createTreeList(child, ul));
+        li.appendChild(ul);
+    }
+    
+    parentElement.appendChild(li);
+}
+
+
+fetch('http://localhost:3001/grupo_rodrigo_thierry_joao/snmp/tree')
     .then(response => response.json())
     .then(data => {
         const treeData = transformToTree(data);
+        var container = document.getElementById('graphContainer');
+        container.innerHTML = '';
 
-        const mychart = echarts.init(document.getElementById('graphContainer'));
-
-        const option = {
-            tooltip: {
-                trigger: 'item',
-                triggerOn: 'mousemove'
-            },
-            series: [
-                {
-                    type: 'tree',
-                    data: [treeData],
-                    top: '1%',
-                    left: '7%',
-                    bottom: '1%',
-                    right: '20%',
-                    symbolSize: 7,
-                    label: {
-                        position: 'left',
-                        verticalAlign: 'middle',
-                        align: 'right',
-                        fontSize: 9
-                    },
-                    leaves: {
-                        label: {
-                            position: 'right',
-                            verticalAlign: 'middle',
-                            align: 'left'
-                        }
-                    },
-                    expandAndCollapse: true,
-                    animationDuration: 550,
-                    animationDurationUpdate: 750
-                }
-            ]
-        };
-
-        mychart.setOption(option);
+        var ul = document.createElement('ul');
+        ul.className = 'MYul';
+        createTreeList(treeData, ul);
+        container.appendChild(ul);
     })
     .catch(error => console.error('Error fetching or transforming data:', error));

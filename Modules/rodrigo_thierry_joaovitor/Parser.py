@@ -357,16 +357,19 @@ class TCPPacket(Packet):
         packet.urgent_pointer = pkt.urp
 
         data: Packet | List[Packet] | None = None
-        if packet.dstPort == 80:
-            if pkt.data is not None and len(pkt.data) > 0 and pkt.data != b'':
+        if len(pkt.data) > 0 and pkt.data != b'':
+            if packet.dstPort == 80:
                 try:
-                    data = HTTPPacket.convert(dpkt.http.Request(pkt.data))
-                except Exception as e:
-                    print ("Nao consegui request", e)
-                    try:
-                        data = HTTPPacket.convert(dpkt.http.Response(pkt.data))
-                    except Exception as f:
-                        print("Nao consegui response", f)
+                    dpktpacket = dpkt.http.Request(pkt.data)
+                    data = HTTPPacket.convert(dpktpacket)
+                except dpkt.dpkt.UnpackError:
+                    pass
+            elif packet.srcPort == 80:
+                try:
+                    dpktpacket = dpkt.http.Response(pkt.data)
+                    data = HTTPPacket.convert(dpktpacket)
+                except dpkt.dpkt.UnpackError:
+                    pass
         elif packet.dstPort == 53:
             # data = DNSPacket.convert(pkt.data) # FIXME Há necessidade de analisar DNS sobre UDP?
             pass
@@ -390,7 +393,7 @@ class HTTPPacket(Packet):
     Classe para encapsular pacotes HTTP
     '''
 
-    isReponse: bool
+    isResponse: bool
     status: int
     method: str
     uri: str
@@ -405,11 +408,11 @@ class HTTPPacket(Packet):
             return None
 
         packet = HTTPPacket()
-        packet.isReponse = isinstance(pkt, dpkt.http.Response)
+        packet.isResponse = isinstance(pkt, dpkt.http.Response)
         packet.version = pkt.version
         packet.headers = pkt.headers
         packet.body = pkt.body
-        if packet.isReponse:
+        if packet.isResponse:
             packet.status = pkt.status
             print("HTTPPacket", packet.status, "convertido")
         else:

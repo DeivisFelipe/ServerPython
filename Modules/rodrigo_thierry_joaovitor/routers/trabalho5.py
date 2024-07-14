@@ -1,15 +1,16 @@
 from fastapi import APIRouter
 from typing import Dict, List, Any
 import json
-from ...rodrigo_thierry_joaovitor.Parser import PacketSource, UDPPacket, IPPacket, TCPPacket, packetSource as src
+from ...rodrigo_thierry_joaovitor.Parser import PacketSource, UDPPacket, IPPacket, TCPPacket
 from ...rodrigo_thierry_joaovitor.PortFinder import findService
 
 router = APIRouter(prefix="/grupo_rodrigo_thierry_joao/tcp", tags=[""])
+src_allPackets, src_allPacketsDict = PacketSource.read("tcp.pcap")
 
 
 @router.get("/conversations")
 def get_conversations():
-    TCP_pkts: List[IPPacket] = src.allPacketsDict[IPPacket]
+    TCP_pkts: List[IPPacket] = src_allPacketsDict[IPPacket]
 
     set_tcp: set[tuple[str, str]] = set()
 
@@ -28,7 +29,7 @@ count_src = count_dst = 0
 
 @router.get("/info/{src_ip}/{src_port}/{dst_ip}/{dst_port}")
 def get_tcp_info(src_ip: str, src_port: int, dst_ip: str, dst_port: int):
-    TCP_pkts: List[TCPPacket] = src.allPacketsDict[TCPPacket]
+    TCP_pkts: List[TCPPacket] = src_allPacketsDict[TCPPacket]
 
     src_ip = src_ip.strip()
     dst_ip = dst_ip.strip()

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dados de Tráfego - SNMP</title>
+    <link rel="stylesheet" href="trabalho8.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style type="text/css">
+        #network {
+            width: 100%;
+            height: 400px; /* Ajuste a altura conforme necessário */
+            border: 1px solid lightgray;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dados de Tráfego - SNMP</h1>
+
+    <h2>Tamanho Médio dos Pacotes ao Longo do Tempo:</h2>
+    <select id="packet-count-select">
+        <option value="10" selected>Mostrar últimos 10 pacotes</option>
+        <option value="20">Mostrar últimos 20 pacotes</option>
+        <option value="30">Mostrar últimos 30 pacotes</option>
+        <option value="all">Mostrar todos os pacotes</option>
+    </select>
+    <canvas id="length-over-time-chart" width="300" height="100"></canvas>
+    <br>
+
+    <h2>Distribuição de Trafego por IP de Origem/Destino:</h2>
+    <canvas id="ip-traffic-distribution-chart" width="300" height="100"></canvas>
+    <br>
+
+    <h2>Pacotes Capturados:</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Número</th>
+                <th>Timestamp</th>
+                <th>IP de Origem</th>
+                <th>IP de Destino</th>
+                <th>Protocolo</th>
+                <th>Tamanho</th>
+                <th>Info</th>
+            </tr>
+        </thead>
+        <tbody id="packets-table-body">
+        </tbody>
+    </table>
+
+    <script src="trabalho8.js"></script>
+</body>
+</html>

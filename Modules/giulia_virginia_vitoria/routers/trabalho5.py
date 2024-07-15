@@ -1,22 +1,26 @@
 import dpkt
-from collections import defaultdict
-from collections import Counter
-from fastapi import FastAPI
-from fastapi import APIRouter
+from collections import defaultdict, Counter
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import uvicorn
 import shutil
 import os
+
 router = APIRouter()
 app = FastAPI()
+
+# Classe para representar as informações dos pacotes
 class PacketInfo(BaseModel):
     flows: int
     total_bytes: int
-    flags: Dict[str, int]
-    
+    flags: dict
+
 def count_tcp_flows(pcap_file):
     flows = defaultdict(int)
-    bytes_per_flow = 0  # Dicionário para armazenar bytes por fluxo
+    bytes_per_flow = 0  # Variável para armazenar bytes por fluxo
     flags_counter = Counter()
+    
     # Contar o número de fluxos em um arquivo pcap usando handshake do TCP
     with open(pcap_file, 'rb') as f:
         pcap = dpkt.pcap.Reader(f)
@@ -60,17 +64,15 @@ def count_tcp_flows(pcap_file):
 async def count_flows():
     pcap_file = './pcaps/trabalho5.pcap'
     flows, bytes_per_flow, flags_counter = count_tcp_flows(pcap_file)
-    
-    # Converter bytes_per_flow e flags_per_flow para um formato JSON serializável
-
 
     result = {
         "flows": flows,
         "total_bytes": bytes_per_flow,
         "flags": dict(flags_counter)
-        }
+    }
     return result
 
 app.include_router(router)
+
 if __name__ == "__main__":
     uvicorn.run(app, host="localhost", port=3001)

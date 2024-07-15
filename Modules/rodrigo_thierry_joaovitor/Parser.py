@@ -440,7 +440,7 @@ class PacketSource:
     para lidar melhtos com pacotes aninhados. ex.: IP(UDP(RIP))'''
     allPacketsDict: Dict[type, List[Packet]]
 
-    def readPackets(self, filePath: str) -> list:
+    def readPackets(filePath: str) -> list:
         '''
         Le um arquivo pcap e retorna uma lista de pacotes IP
         '''
@@ -483,7 +483,7 @@ class PacketSource:
         outputDict: Dict[type, List[Packet]] = {}
         for arquivo in arquivos:
             print("Lendo arquivo: ", arquivo)
-            packets = self.readPackets(f'./pcaps/{arquivo}')
+            packets = PacketSource.readPackets(f'./pcaps/{arquivo}')
             for ts, packet in packets:
                 Packet.ts = ts  # Os pacotes usarão esta variavel estatica para definir seu timestamp
                 pkt: Packet | List[Packet] = Packet.convert(packet)
@@ -510,6 +510,46 @@ class PacketSource:
             print(arquivo, "tinha um total de", len(packets), "pacotes")
         print("li um total de", len(output), "pacotes")
         return output, outputDict
+
+    def read(file: str) -> Tuple[List[Packet], Dict[type, List[Packet]]]:
+        '''
+        Le todos os pcap da pasta captures e retorna uma lista de pacotes IP
+        '''
+
+
+        
+        output = []
+        outputDict: Dict[type, List[Packet]] = {}
+        
+        print("Lendo arquivo: ", file)
+        packets = PacketSource.readPackets(f'./pcaps/{file}')
+        for ts, packet in packets:
+            Packet.ts = ts  # Os pacotes usarão esta variavel estatica para definir seu timestamp
+            pkt: Packet | List[Packet] = Packet.convert(packet)
+            if pkt is None:
+                # print("um pacote nao foi convertido")
+                continue
+
+            if type(pkt) != list:
+                # Esta condição não deve ocorrer,
+                # uniqueUuid está sendo definido na inicialização do objeto
+                if pkt.uniqueId is None:
+                    pkt.uniqueId = uuid.uuid4()
+                # self.packetData[pkt.uniqueId] = packet.data
+                output.append(pkt)
+
+                if outputDict.get(pkt.__class__) is None:
+                    outputDict[pkt.__class__] = []
+                outputDict[pkt.__class__].append(pkt)
+            elif type(pkt) == list:
+                appendPackets(outputDict, pkt)
+                for pkt_unit in pkt:
+                    # self.packetData[pkt_unit.uniqueId] = packet.data
+                    output.append(pkt_unit)
+        print(file, "tinha um total de", len(packets), "pacotes")
+        print("li um total de", len(output), "pacotes")
+        return output, outputDict
+
 
     def __init__(self):
         self.packetData = {}

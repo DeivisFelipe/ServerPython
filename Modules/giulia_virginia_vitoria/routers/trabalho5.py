@@ -1,45 +1,76 @@
-#trabalho5.py
+import dpkt
+from collections import defaultdict
+from collections import Counter
+from fastapi import FastAPI
 from fastapi import APIRouter
-from typing import List
-from scapy.all import rdpcap, IP, TCP, Raw
-from pydantic import BaseModel  # Importe o BaseModel aqui
-
+from fastapi.middleware.cors import CORSMiddleware
+import shutil
+import os
 router = APIRouter()
+app = FastAPI()
+class PacketInfo(BaseModel):
+    flows: int
+    total_bytes: int
+    flags: Dict[str, int]
+    
+def count_tcp_flows(pcap_file):
+    flows = defaultdict(int)
+    bytes_per_flow = 0  # Dicionário para armazenar bytes por fluxo
+    flags_counter = Counter()
+    # Contar o número de fluxos em um arquivo pcap usando handshake do TCP
+    with open(pcap_file, 'rb') as f:
+        pcap = dpkt.pcap.Reader(f)
+        for ts, buf in pcap:
+            eth = dpkt.ethernet.Ethernet(buf)
+            if eth.type != dpkt.ethernet.ETH_TYPE_IP:
+                continue
+            ip = eth.data
+            if ip.p != dpkt.ip.IP_PROTO_TCP:
+                continue
+            tcp = ip.data
+            flow_key = (ip.src, tcp.sport, ip.dst, tcp.dport)
+            if tcp.flags & dpkt.tcp.TH_SYN and not tcp.flags & dpkt.tcp.TH_ACK:
+                flows[flow_key] += 1
+            if tcp.flags & dpkt.tcp.TH_ACK:
+                flows[(ip.dst, tcp.dport, ip.src, tcp.sport)] += 1
 
-# Classe para representar dados dos pacotes TCP
-class TCPData(BaseModel):
-    timestamp: float
-    source: str
-    destination: str
-    length: int
-    data: str
+            # Acumular bytes por fluxo
+            bytes_per_flow += len(tcp)
+            
+            if tcp.flags & dpkt.tcp.TH_SYN:
+                flags_counter['SYN'] += 1
+            if tcp.flags & dpkt.tcp.TH_ACK:
+                flags_counter['ACK'] += 1
+            if tcp.flags & dpkt.tcp.TH_FIN:
+                flags_counter['FIN'] += 1
+            if tcp.flags & dpkt.tcp.TH_RST:
+                flags_counter['RST'] += 1
+            if tcp.flags & dpkt.tcp.TH_PUSH:
+                flags_counter['PSH'] += 1
+            if tcp.flags & dpkt.tcp.TH_URG:
+                flags_counter['URG'] += 1
+            if tcp.flags & dpkt.tcp.TH_ECE:
+                flags_counter['ECE'] += 1
+            if tcp.flags & dpkt.tcp.TH_CWR:
+                flags_counter['CWR'] += 1
 
-@router.get("/trabalho5", response_model=List[TCPData])
-def read_trabalho5():
-    pcap_file_path = './pcaps/trabalho5.pcap'  # Verifique o caminho do seu arquivo pcap
-    tcp_packets = extract_tcp_info(pcap_file_path)
-    return tcp_packets
+    return len(flows), bytes_per_flow, flags_counter
 
-# Função para extrair informações dos pacotes TCP do arquivo pcap usando Scapy
-def extract_tcp_info(pcap_file):
-    packets = rdpcap(pcap_file)
-    tcp_packets = []
+@router.get("/trabalho5", response_model=PacketInfo)
+async def count_flows():
+    pcap_file = './pcaps/trabalho5.pcap'
+    flows, bytes_per_flow, flags_counter = count_tcp_flows(pcap_file)
+    
+    # Converter bytes_per_flow e flags_per_flow para um formato JSON serializável
 
-    for pkt in packets:
-        if IP in pkt and TCP in pkt:
-            # Verifica se o pacote possui carga útil (load)
-            if pkt.haslayer(Raw):
-                data_payload = pkt[Raw].load.hex()
-            else:
-                data_payload = ""
 
-            tcp_data = TCPData(
-                timestamp=pkt.time,
-                source=pkt[IP].src,
-                destination=pkt[IP].dst,
-                length=len(pkt),
-                data=data_payload
-            )
-            tcp_packets.append(tcp_data)
+    result = {
+        "flows": flows,
+        "total_bytes": bytes_per_flow,
+        "flags": dict(flags_counter)
+        }
+    return result
 
-    return tcp_packets
+app.include_router(router)
+if __name__ == "__main__":
+    uvicorn.run(app, host="localhost", port=3001)

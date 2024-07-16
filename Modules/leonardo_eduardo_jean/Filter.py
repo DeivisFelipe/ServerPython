@@ -1,4 +1,6 @@
 import requests
+from scapy.layers.inet import TCP
+
 
 def FilterIpv4(packets):
     report = {"localizacao": [], "ips": []}
@@ -67,6 +69,19 @@ def FilterARP(packets):
 
     return report
 
+
+def FilterTCP(packets):
+    report = {
+        "window_sizes": [],
+        "timestamps": []
+    }
+
+    for packet in packets:
+        if TCP in packet:
+            report["window_sizes"].append(packet[TCP].window)
+            report["timestamps"].append(float(packet.time))
+
+    return report
 
 
 

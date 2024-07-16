@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from Modules.leonardo_eduardo_jean.Service import Service
-from Modules.leonardo_eduardo_jean.Filter import FilterIpv4, FilterARP
+from Modules.leonardo_eduardo_jean.Filter import FilterIpv4, FilterARP, FilterTCP
 
 router = APIRouter(prefix="/leonardo_eduardo_jean", tags=[""])
 
@@ -29,14 +29,15 @@ async def get_udp_packet():
     return packets
 
 @router.get("/tcp")
-async def get_tcp_packet():
+async def get_tcp_data():
     packets = service.read_tcp_from_file()
-    return packets
+    report = FilterTCP(packets)
+    return report
 
 @router.get("/http")
 async def get_http_packet():
-    packets = service.read_http_from_file()
-    return packets
+    report = service.read_http_from_file()
+    return report
 
 @router.get("/dns")
 async def get_dns_packet():
@@ -45,5 +46,5 @@ async def get_dns_packet():
 
 @router.get("/snmp")
 async def get_snmp_packet():
-    packets = service.read_snmp_from_file()
-    return packets
+    report = service.read_snmp_from_file()
+    return report

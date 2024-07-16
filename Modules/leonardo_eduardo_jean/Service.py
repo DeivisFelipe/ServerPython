@@ -5,14 +5,14 @@ from scapy.layers.dns import DNS, DNSQR
 from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.l2 import ARP
 from scapy.layers.rip import RIP
-from scapy.layers.snmp import SNMP
+from scapy.layers.snmp import SNMP, SNMPnext
+from collections import Counter
+from collections import defaultdict
 
 from Modules.leonardo_eduardo_jean.DnsPacket import DnsPacket
-from Modules.leonardo_eduardo_jean.HttpPacket import HttpPacket
 from Modules.leonardo_eduardo_jean.Ipv4Packet import IPv4Packet
 from Modules.leonardo_eduardo_jean.ArpPacket import ArpPacket
 from Modules.leonardo_eduardo_jean.RipPacket import RipPacket
-from Modules.leonardo_eduardo_jean.SnmpPacket import SnmpPacket
 from Modules.leonardo_eduardo_jean.TcpPacket import TcpPacket
 from Modules.leonardo_eduardo_jean.UdpPacket import UdpPacket
 
@@ -101,43 +101,38 @@ class Service:
                 udp_packets.append(udp_packet)
         return udp_packets
 
-
     def read_tcp_from_file(self):
         directory = os.path.dirname(os.path.abspath(__file__))
         pcap_path = f"{directory}/../../pcaps/trabalho5.pcap"
 
-        packets = rdpcap(pcap_path)
-        tcp_packets = []
+        try:
+            packets = rdpcap(pcap_path)
+        except FileNotFoundError:
+            print(f"Arquivo PCAP não encontrado em: {pcap_path}")
+            return []
+        except Scapy_Exception as e:
+            print(f"Erro ao ler o arquivo PCAP: {e}")
+            return []
 
-        for packet in packets:
-            if TCP in packet:
-                packet_entry = packet[TCP]
-                tcp_packet = TcpPacket(
-                    sport=packet_entry.sport,
-                    dport=packet_entry.dport,
-                    seq=packet_entry.seq,
-                    ack=packet_entry.ack,
-                    flags=packet_entry.flags
-                )
-                tcp_packets.append(tcp_packet)
-        return tcp_packets
+        return packets
 
     def read_http_from_file(self):
         directory = os.path.dirname(os.path.abspath(__file__))
         pcap_path = f"{directory}/../../pcaps/trabalho6.pcap"
 
         packets = rdpcap(pcap_path)
-        http_packets = []
+        http_verbs = []
 
         for packet in packets:
-            if TCP in packet and packet[TCP].dport == 80 or packet[TCP].sport == 80:
-                if b'HTTP' in bytes(packet[TCP].payload):
-                    source_ip = packet[IP].src
-                    dest_ip = packet[IP].dst
-                    http_payload = bytes(packet[TCP].payload).decode('utf-8', errors='ignore')
-                    http_packet = HttpPacket(source_ip, dest_ip, http_payload)
-                    http_packets.append(http_packet)
-        return http_packets
+            if hasattr(packet.payload, 'load') and b'HTTP' in packet.payload.load:
+                http_payload = packet.payload.load.decode('utf-8', errors='ignore')
+                verb = http_payload.split()[0] if http_payload else None
+                if verb in ['GET', 'POST', 'HEAD', 'PUT', 'DELETE']:
+                    http_verbs.append(verb)
+
+        verb_counts = Counter(http_verbs)
+
+        return verb_counts
 
 
     def read_dns_from_file(self):
@@ -179,20 +174,12 @@ class Service:
         pcap_path = f"{directory}/../../pcaps/trabalho8.pcap"
 
         packets = rdpcap(pcap_path)
-        snmp_packets = []
+        pdu_counts = defaultdict(int)
 
         for packet in packets:
-            if SNMP in packet:
-                snmp_layer = packet[SNMP]
-                version = snmp_layer.version
-                community = snmp_layer.community
-                pdu_type = snmp_layer.PDU
-                variable_bindings = snmp_layer[SNMP].varbindlist
-                snmp_packet = SnmpPacket(
-                    version=version,
-                    community=community,
-                    pdu_type=pdu_type,
-                    variable_bindings=variable_bindings
-                )
-                snmp_packets.append(snmp_packet)
-        return snmp_packets
+            if SNMP in packet or SNMPnext in packet:
+                snmp_layer = packet[SNMP] if SNMP in packet else packet[SNMPnext]
+                pdu_type = snmp_layer.PDU.name
+                pdu_counts[pdu_type] += 1
+
+        return dict(pdu_counts)

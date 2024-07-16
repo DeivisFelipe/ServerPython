@@ -51,7 +51,7 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- Dados da tabela serão inseridos aqui -->
+               
             </tbody>
         </table>
     </div>
@@ -66,7 +66,7 @@
         async function main() {
             const data = await fetchData();
 
-            // Preparar os dados para os gráficos e a tabela
+            
             let barChartData = {
                 domain: [],
                 count: []
@@ -79,22 +79,22 @@
             let tableHtml = '';
 
             data.forEach(item => {
-                // Dados para o gráfico de barras
+                
                 barChartData.domain.push(item.domain);
                 barChartData.count.push(item.count);
 
-                // Dados para o gráfico de pizza
+                
                 if (pieChartData[item.query_type]) {
                     pieChartData[item.query_type] += item.count;
                 } else {
                     pieChartData[item.query_type] = item.count;
                 }
 
-                // Dados para o gráfico de linha
+                
                 lineChartData.domain.push(item.domain);
                 lineChartData.count.push(item.count);
 
-                // Dados para a tabela
+                
                 tableHtml += `<tr>
                                 <td>${item.domain}</td>
                                 <td>${item.query_type}</td>
@@ -102,10 +102,10 @@
                               </tr>`;
             });
 
-            // Preencher a tabela
+        
             document.querySelector('#dnsTable tbody').innerHTML = tableHtml;
 
-            // Criar o gráfico de barras
+          
             var barChartDom = document.getElementById('dnsBarChart');
             var barChart = echarts.init(barChartDom);
             var barOption = {
@@ -129,7 +129,7 @@
             };
             barChart.setOption(barOption);
 
-            // Criar o gráfico de pizza
+          
             var pieChartDom = document.getElementById('dnsPieChart');
             var pieChart = echarts.init(pieChartDom);
             var pieOption = {
@@ -148,7 +148,7 @@
             };
             pieChart.setOption(pieOption);
 
-            // Criar o gráfico de linha
+            
             var lineChartDom = document.getElementById('dnsLineChart');
             var lineChart = echarts.init(lineChartDom);
             var lineOption = {

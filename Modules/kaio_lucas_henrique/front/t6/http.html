@@ -30,27 +30,27 @@
         async function main() {
             const data = await fetchData();
 
-            // Processing data for charts
+            
             const requestsByDomain = {};
             const methods = {};
             const statusCodes = {};
 
             data.forEach(item => {
-                // Count requests by domain
+               
                 if (requestsByDomain[item.host]) {
                     requestsByDomain[item.host]++;
                 } else {
                     requestsByDomain[item.host] = 1;
                 }
 
-                // Count HTTP methods
+               
                 if (methods[item.method]) {
                     methods[item.method]++;
                 } else {
                     methods[item.method] = 1;
                 }
 
-                // Count status codes
+                
                 if (statusCodes[item.status_code]) {
                     statusCodes[item.status_code]++;
                 } else {
@@ -58,7 +58,7 @@
                 }
             });
 
-            // Creating charts
+          
             createChart('requestsByDomain', 'Requisições por Domínio', 'bar', requestsByDomain);
             createChart('httpMethods', 'Métodos HTTP', 'bar', methods);
             createChart('httpStatusCodes', 'Códigos de Status HTTP', 'bar', statusCodes);

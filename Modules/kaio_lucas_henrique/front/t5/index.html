@@ -30,8 +30,8 @@
                 }).addTo(map).bindPopup(`Origem: ${connection.source_ip} - ${connection.source_location}`);
 
                 var destinationMarker = L.circleMarker([connection.destination_latitude, connection.destination_longitude], {
-                    color: 'red',   // Cor do marcador de destino
-                    radius: 5       // Tamanho do marcador
+                    color: 'red',   
+                    radius: 5       
                 }).addTo(map).bindPopup(`Destino: ${connection.destination_ip} - ${connection.destination_location}`);
 
                 var polyline = L.polyline([

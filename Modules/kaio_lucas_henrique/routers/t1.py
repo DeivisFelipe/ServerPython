@@ -1,94 +1,45 @@
-from typing import List
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import json
-from datetime import datetime
-import threading
-import statistics
-from scapy.all import sniff, IP, TCP  
-packets_info = []
-
-def capture_ipv4_packets():
-    with open('ip.json') as file:
-        data = json.load(file)
-    public_ips = [ip for ip, details in data.items() if details['public']]
-
-    def packet_callback(packet):
-        if IP in packet and packet[IP].src in public_ips:
-            packet_info = {
-                "timestamp": datetime.now(),
-                "packet_size": len(packet),
-                "src_ip": packet[IP].src,
-                "dst_ip": packet[IP].dst,
-                "protocol": packet[IP].proto,
-                "src_port": packet[TCP].sport if TCP in packet else None,
-                "dst_port": packet[TCP].dport if TCP in packet else None,
-                "payload_size": len(packet[IP].payload),
-                "tcp_flags": packet[TCP].flags if TCP in packet else None,
-                "ttl": packet[IP].ttl
-            }
-            packets_info.append(packet_info)
-            print(f"Captured IPv4 packet of size {packet_info['packet_size']} bytes from {packet_info['src_ip']} to {packet_info['dst_ip']} at {packet_info['timestamp']}")
-
-    sniff(filter="ip", prn=packet_callback, store=False)
-
-threading.Thread(target=capture_ipv4_packets, daemon=True).start()
+from fastapi import FastAPI, APIRouter
+import uvicorn
+from scapy.all import IP, rdpcap
 
 app = FastAPI()
+router = APIRouter(prefix="/kaio_lucas_henrique/ip", tags=["Analysis"])
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+class IPData:
+    def __init__(self, timestamp, src_ip, dst_ip, ttl, proto, length):
+        self.timestamp = timestamp
+        self.src_ip = src_ip
+        self.dst_ip = dst_ip
+        self.ttl = ttl
+        self.proto = proto
+        self.length = length
 
-@app.get("/packets-sizes")
-def get_packet_sizes():
-    return packets_info
+def extract_ip_info(pcap_file):
+    packets = rdpcap(pcap_file)
+    ip_packets = []
+    for pkt in packets:
+        if IP in pkt:
+            ip_packet = pkt[IP]
+            info = IPData(
+                timestamp=pkt.time,
+                src_ip=ip_packet.src,
+                dst_ip=ip_packet.dst,
+                ttl=ip_packet.ttl,
+                proto=ip_packet.proto,
+                length=ip_packet.len
+            )
+            ip_packets.append(info)
+    return ip_packets
 
-app.get("/packets-sizes-variation")   # Rota para obeter os tamanhos do pacote e suas variações
-def get_packet_size_variation():
-    if len(packets_info) == 0:
-        return {"error": "No packets captured yet"}
-    sizes = [info["packet_size"] for info in packets_info]
-    average = sum(sizes) / len(sizes)
-    median = statistics.median(sizes)
-    return {
-        "max": max(sizes),
-        "min": min(sizes),
-        "average": average,
-        "median": median,
-        "std_deviation": statistics.stdev(sizes) if len(sizes) > 1 else 0
-    }
 
-@app.get("/packets-sizes-time-range")     # Rota para  obter os tamanhos do pacote em um intervalo de tempo 
-def get_packet_sizes_time_range(start: str, end: str):
-    start_datetime = datetime.fromisoformat(start)
-    end_datetime = datetime.fromisoformat(end)
-    filtered_packets = [p for p in packets_info if start_datetime <= p["timestamp"] <= end_datetime]
-    if not filtered_packets:
-        return {"error": "No packets found in the specified time range"}
-    sizes = [info["packet_size"] for info in filtered_packets]
-    return {
-        "max": max(sizes),
-        "min": min(sizes),
-        "average": sum(sizes) / len(sizes)
-    }
+pcap_file_path = './pcaps/trabalho1.pcapng'
+ip_packets = extract_ip_info(pcap_file_path)
 
-# este endpoint Calcula o tamanho máximo e mínimo dos pacotes capturados.
-#Determina a média dos tamanhos dos pacotes.
-#Calcula a diferença entre os tamanhos máximos e mínimos dos pacotes.
-#Conta quantos pacotes têm tamanhos acima e abaixo da média.
-#Calcula a porcentagem de pacotes que estão acima e abaixo da média dos tamanhos.
-
-@app.get("/packets-sizes-comparasion")
+@router.get("/packets-sizes-comparasion")
 def get_packet_sizes_comparasion():
-    if len(packets_info) == 0:
+    if len(ip_packets) == 0:
         return {"error": "No packets captured yet"}
-    sizes = [info["packet_size"] for info in packets_info]
+    sizes = [ip.length for ip in ip_packets]
     average = sum(sizes) / len(sizes)
     max_size = max(sizes)
     min_size = min(sizes)
@@ -104,3 +55,8 @@ def get_packet_sizes_comparasion():
         "percentage_above_average": (len(above_average) / len(sizes)) * 100,
         "percentage_below_average": (len(below_average) / len(sizes)) * 100
     }
+
+app.include_router(router)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=3001)

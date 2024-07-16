@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Conexões TCP</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        #map { height: 600px; width: 100%; }
+    </style>
+</head>
+<body>
+    <h1>Visualização de Conexões TCP</h1>
+    <div id="map"></div>
+    <script>
+        var map = L.map('map').setView([20, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        async function fetchConnections() {
+            const response = await fetch('http://localhost:3001/kaio_lucas_henrique/tcp/connection-data');
+            const connections = await response.json();
+            connections.forEach(connection => {
+                var sourceMarker = L.circleMarker([connection.source_latitude, connection.source_longitude], {
+                    color: 'blue',  
+                    radius: 5      
+                }).addTo(map).bindPopup(`Origem: ${connection.source_ip} - ${connection.source_location}`);
+
+                var destinationMarker = L.circleMarker([connection.destination_latitude, connection.destination_longitude], {
+                    color: 'red',   // Cor do marcador de destino
+                    radius: 5       // Tamanho do marcador
+                }).addTo(map).bindPopup(`Destino: ${connection.destination_ip} - ${connection.destination_location}`);
+
+                var polyline = L.polyline([
+                    [connection.source_latitude, connection.source_longitude],
+                    [connection.destination_latitude, connection.destination_longitude]
+                ], {
+                    color: 'green', 
+                    weight: 2       
+                }).addTo(map);
+            });
+        }
+
+        fetchConnections();
+    </script>
+</body>
+</html>

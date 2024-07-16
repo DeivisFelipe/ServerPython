@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UDP Traffic Distribution</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+</head>
+<body>
+    <h1>Distribuição de Tráfego por Porta UDP</h1>
+    <div id="udpChart" style="width: 100%; height: 400px;"></div>
+    <script>        
+        var myChart = echarts.init(document.getElementById('udpChart'));
+
+        
+        var option = {
+            title: {
+                text: 'Distribuição de Tráfego por Porta UDP: Quantidade de pacotes por porta',              
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data: ['Pacotes']
+            },
+            xAxis: {
+                type: 'category',
+                name: 'Porta',
+                data: []
+            },
+            yAxis: {
+                type: 'value',
+                name: 'Quantidade de Pacotes'
+            },
+            series: [{
+                name: 'Pacotes',
+                type: 'bar',
+                data: []
+            }]
+        };
+
+       
+        async function loadData() {
+            const response = await fetch('http://localhost:3001/kaio_lucas_henrique/udp/udp-data');
+            const data = await response.json();
+
+          
+            const portCounts = data.reduce((acc, packet) => {
+                acc[packet.destination_port] = (acc[packet.destination_port] || 0) + 1;
+                return acc;
+            }, {});
+
+           
+            option.xAxis.data = Object.keys(portCounts);
+            option.series[0].data = Object.values(portCounts);
+
+            
+            myChart.setOption(option);
+        }
+
+       
+        window.onload = loadData;
+    </script>
+</body>
+</html>

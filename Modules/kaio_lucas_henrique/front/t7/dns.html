@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Tráfego DNS</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        .chart-container, .table-container {
+            width: 90%;
+            margin: auto;
+            padding-top: 20px;
+        }
+        .chart-row {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .chart {
+            width: 45%;
+            height: 400px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Visualização de Tráfego DNS</h1>
+    <div class="chart-row">
+        <div id="dnsBarChart" class="chart"></div>
+        <div id="dnsPieChart" class="chart"></div>
+    </div>
+    <div id="dnsLineChart" class="chart"></div>
+    <div class="table-container">
+        <table id="dnsTable">
+            <thead>
+                <tr>
+                    <th>Domínio</th>
+                    <th>Tipo de Query</th>
+                    <th>Quantidade</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dados da tabela serão inseridos aqui -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('http://localhost:3001/kaio_lucas_henrique/dns/dns-queries');
+            const data = await response.json();
+            return data;
+        }
+
+        async function main() {
+            const data = await fetchData();
+
+            // Preparar os dados para os gráficos e a tabela
+            let barChartData = {
+                domain: [],
+                count: []
+            };
+            let pieChartData = {};
+            let lineChartData = {
+                domain: [],
+                count: []
+            };
+            let tableHtml = '';
+
+            data.forEach(item => {
+                // Dados para o gráfico de barras
+                barChartData.domain.push(item.domain);
+                barChartData.count.push(item.count);
+
+                // Dados para o gráfico de pizza
+                if (pieChartData[item.query_type]) {
+                    pieChartData[item.query_type] += item.count;
+                } else {
+                    pieChartData[item.query_type] = item.count;
+                }
+
+                // Dados para o gráfico de linha
+                lineChartData.domain.push(item.domain);
+                lineChartData.count.push(item.count);
+
+                // Dados para a tabela
+                tableHtml += `<tr>
+                                <td>${item.domain}</td>
+                                <td>${item.query_type}</td>
+                                <td>${item.count}</td>
+                              </tr>`;
+            });
+
+            // Preencher a tabela
+            document.querySelector('#dnsTable tbody').innerHTML = tableHtml;
+
+            // Criar o gráfico de barras
+            var barChartDom = document.getElementById('dnsBarChart');
+            var barChart = echarts.init(barChartDom);
+            var barOption = {
+                title: {
+                    text: 'Consultas DNS por Domínio'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: barChartData.domain
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [{
+                    data: barChartData.count,
+                    type: 'bar'
+                }]
+            };
+            barChart.setOption(barOption);
+
+            // Criar o gráfico de pizza
+            var pieChartDom = document.getElementById('dnsPieChart');
+            var pieChart = echarts.init(pieChartDom);
+            var pieOption = {
+                title: {
+                    text: 'Distribuição de Tipos de Query DNS'
+                },
+                tooltip: {
+                    trigger: 'item'
+                },
+                series: [{
+                    type: 'pie',
+                    data: Object.keys(pieChartData).map(key => {
+                        return {name: key, value: pieChartData[key]};
+                    })
+                }]
+            };
+            pieChart.setOption(pieOption);
+
+            // Criar o gráfico de linha
+            var lineChartDom = document.getElementById('dnsLineChart');
+            var lineChart = echarts.init(lineChartDom);
+            var lineOption = {
+                title: {
+                    text: 'Evolução das Consultas DNS'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: lineChartData.domain
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [{
+                    data: lineChartData.count,
+                    type: 'line'
+                }]
+            };
+            lineChart.setOption(lineOption);
+        }
+
+        main();
+    </script>
+</body>
+</html>

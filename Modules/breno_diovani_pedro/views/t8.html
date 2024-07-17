@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SNMP Responses Over Time</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+</head>
+<body>
+    <div id="main" style="width: 1000px; height: 600px;"></div>
+    <script>
+        fetch('echarts_response_data.json')
+            .then(response => response.json())
+            .then(data => {
+                const timestamps = data.map(item => item.timestamp);
+                const counts = data.map(item => item.count);
+
+                const chart = echarts.init(document.getElementById('main'));
+                const option = {
+                    title: {
+                        text: 'SNMP Responses Over Time'
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross'
+                        }
+                    },
+                    xAxis: {
+                        type: 'time',
+                        name: 'Time',
+                        axisLabel: {
+                            formatter: function(value) {
+                                return new Date(value).toLocaleString();
+                            }
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: 'Response Count'
+                    },
+                    series: [{
+                        name: 'Responses',
+                        type: 'line',
+                        data: data.map(item => [item.timestamp * 1000, item.count])  // Convertendo timestamp para milissegundos
+                    }]
+                };
+                chart.setOption(option);
+            })
+            .catch(error => console.error('Error loading JSON:', error));
+    </script>
+</body>
+</html>

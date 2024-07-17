@@ -1,16 +1,16 @@
 from fastapi import APIRouter
 from typing import Dict, List, Any
 import json
-from ...rodrigo_thierry_joaovitor.Parser import PacketSource, UDPPacket, IPPacket, packetSource as src
+from ...rodrigo_thierry_joaovitor.Parser import PacketSource, UDPPacket, IPPacket
 from ...rodrigo_thierry_joaovitor.PortFinder import findService
 
 router = APIRouter(prefix="/grupo_rodrigo_thierry_joao/udp", tags=[""])
-
+src_allPackets, src_allPacketsDict = PacketSource.read("udp.pcap")
 
 @router.get("/todos")
 def get_todos():
     ''' Retorna todos os pacotes disponiveis'''
-    for packet in src.allPackets:
+    for packet in src_allPackets:
         if isinstance(packet, UDPPacket):
             yield packet
 
@@ -21,10 +21,43 @@ def get_services(port: int):
     return findService(port)
 
 
+@router.get("/sugestaoDeivis")
+def get_sugestaoDeivis():
+    '''Retorna os dados para formar o gráfico sugerido pelo Deivis:
+    Sugestão: Listar o volume de tráfego por porta e pegar a lista
+    de aplicações de cada porta dessas.
+    '''
+
+    udp_packets: List[UDPPacket] = src_allPacketsDict[UDPPacket]
+
+    dict_return: Dict[Any, Any] = dict()
+
+    dict_return["n_req"]: Dict[int, Any] = dict()
+    dict_return["data"]: Dict[int, Any] = dict()
+
+    for pkt in udp_packets:
+
+        if dict_return["data"].get(pkt.srcPort, None) is None:
+            dict_return["data"][pkt.srcPort] = pkt.length
+        else:
+            dict_return["data"][pkt.srcPort] += pkt.length
+
+        if dict_return["n_req"].get(pkt.dstPort, None) is None:
+            dict_return["n_req"][pkt.dstPort] = 1
+        else:
+            dict_return["n_req"][pkt.dstPort] += 1
+
+
+
+    dict_return["data"] = dict(sorted(dict_return["data"].items(), key=lambda item: item[1]))
+
+    return dict_return
+
+
 @router.get("/port/{port}")
 def get_in_port(port: int):
     ''' Retorna todos os pacotes que usam uma porta UDP como destino'''
-    for packet in src.allPackets:
+    for packet in src_allPackets:
         if not isinstance(packet, UDPPacket):
             continue
         udpPacket: UDPPacket = packet
@@ -37,7 +70,7 @@ def miserables():
     pre_nodes: Dict[str, Dict] = dict()
     edges: List[Dict[str, str]] = []
 
-    allUDP: List[UDPPacket] = src.allPacketsDict[UDPPacket]
+    allUDP: List[UDPPacket] = src_allPacketsDict[UDPPacket]
     category: List[str] = []
 
     for item in allUDP:
@@ -84,7 +117,6 @@ def miserables():
         pre_nodes.get(dst_socket)["value"] += 1
         pre_nodes.get(dst_socket)["symbolSize"] += 1
 
-
     retorno: Dict[str, List[Dict[str, Any]]] = {"nodes": list(pre_nodes.values()), "links": edges,
                                                 "categories": [{"name": i} for i in category]}
 
@@ -104,7 +136,7 @@ def miserables():
 # @router.get("/enviados/{ip}")
 # def get_enviados(ip: str):
 #     ''' Retorna todos os pacotes UDP que um ip enviou'''
-#     for packet in src.allPackets:
+#     for packet in src_allPackets:
 #         if not isinstance(packet, UDPPacket):
 #             continue
 #         udpPacket:UDPPacket = packet
@@ -114,7 +146,7 @@ def miserables():
 # @router.get("/recebidos/{ip}")
 # def get_recebidos(ip: str):
 #     ''' Retorna todos os pacotes UDP que um ip recebeu'''
-#     for packet in src.allPackets:
+#     for packet in src_allPackets:
 #         if not isinstance(packet, UDPPacket):
 #             continue
 #         udpPacket:UDPPacket = packet
@@ -125,7 +157,7 @@ def miserables():
 # def get_senders():
 #     ''' Retorna todos os ips que enviaram pacotes UDP'''
 #     output = []
-#     for packet in src.allPackets:
+#     for packet in src_allPackets:
 #         if not isinstance(packet, UDPPacket):
 #             continue
 #         udpPacket: UDPPacket = packet
@@ -137,7 +169,7 @@ def miserables():
 # def get_receivers():
 #     ''' Retorna todos os ips que receberam pacotes UDP'''
 #     output = []
-#     for packet in src.allPackets:
+#     for packet in src_allPackets:
 #         if not isinstance(packet, UDPPacket):
 #             continue
 #         udpPacket:UDPPacket = packet

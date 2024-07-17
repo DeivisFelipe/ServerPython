@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Tráfego SNMP</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        .chart-container {
+            width: 90%;
+            height: 400px;
+            margin: auto;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Análise de Tráfego SNMP</h1>
+    <div id="operationDistribution" class="chart-container"></div>
+    <div id="responseTime" class="chart-container"></div>
+    <div id="errorRate" class="chart-container"></div>
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('http://localhost:3001/kaio_lucas_henrique/snmp/snmp-data');
+            const data = await response.json();
+            return data;
+        }
+
+        async function main() {
+            const data = await fetchData();
+
+            const operations = {};
+            const responseTimes = [];
+            let errorCount = 0;
+
+            data.forEach(item => {
+                if (operations[item.operation]) {
+                    operations[item.operation]++;
+                } else {
+                    operations[item.operation] = 1;
+                }
+                if (item.response_time) {
+                    responseTimes.push(item.response_time);
+                }
+                if (item.error_status !== 0) {
+                    errorCount++;
+                }
+            });
+
+            createBarChart('operationDistribution', 'Distribuição de Operações SNMP', operations);
+            createBarChart('responseTime', 'Tempo de Resposta SNMP', responseTimes);
+            createPieChart('errorRate', 'Taxa de Erros SNMP', {'Erros': errorCount, 'Sucessos': data.length - errorCount});
+        }
+
+        function createBarChart(containerId, title, data) {
+            var chartDom = document.getElementById(containerId);
+            var myChart = echarts.init(chartDom);
+            var option = {
+                title: {
+                    text: title,
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: Object.keys(data),
+                    name: 'Categoria'
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Quantidade'
+                },
+                series: [{
+                    data: Object.values(data),
+                    type: 'bar'
+                }]
+            };
+            myChart.setOption(option);
+        }
+
+        function createPieChart(containerId, title, data) {
+            var chartDom = document.getElementById(containerId);
+            var myChart = echarts.init(chartDom);
+            var option = {
+                title: {
+                    text: title,
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b} : {c} ({d}%)'
+                },
+                series: [{
+                    name: 'Taxa de Erros',
+                    type: 'pie',
+                    radius: '50%',
+                    data: Object.entries(data).map(([key, value]) => ({name: key, value: value}))
+                }]
+            };
+            myChart.setOption(option);
+        }
+
+        main();
+    </script>
+</body>
+</html>

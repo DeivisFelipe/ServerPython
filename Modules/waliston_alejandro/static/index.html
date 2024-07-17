@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Protocolo IPV4</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="welcome---page">
+      <h1
+        class="welcome--text animate__animated animate__bounce animate__delay-2s animate__slower 3s animate__infinite infinite"
+      >
+        Protocolos IPV4
+      </h1>
+      <div class="lateral--menu">
+        <div class="menu--icons">
+          <a href="#myVideo" class="icon">HOME</a>
+          <a href="#chart1" class="icon">IPV4</a>
+          <a href="#chart3" class="icon">ARP</a>
+          <a href="#sss" class="icon">RIP</a>
+          <a href="#chart5" class="icon">UDP</a>
+          <a href="#chart6" class="icon">TCP</a>
+          <a href="#chart7" class="icon">HTTP</a>
+          <a href="#chart8" class="icon">DNS</a>
+          <a href="#chart9" class="icon">SNMP</a>
+        </div>
+      </div>
+      <video id="myVideo" autoplay muted loop>
+        <source src="./videos/back-v.mp4" type="video/mp4" />
+      </video>
+    </div>
+    
+    <div class="container">
+
+      <div class="c1">
+        <h2 class="ipv4">IPV4</h2>
+        <div id="chart1" class="chart"></div>
+        <div id="chart2" class="chart"></div>
+      </div>
+
+      <div class="c2">
+        <h2 class="arp">Arp</h2>
+        <div id="chart3" class="chart"></div>
+      </div>
+
+      <div class="c3" id="sss">
+        <h2 class="rip">Tabelas de Rotas Rip</h2>
+        <div class="table-container">
+          
+          <table id="dataRipTable" border="1">
+            <thead>
+              <tr>
+                <th>Roteador</th>
+                <th>Endereço</th>
+                <th>Distância</th>
+                <th>Máscara</th>
+                <th>Next Hop</th>
+              </tr>
+            </thead>
+            <tbody id="dataRipBody">
+              <!-- As linhas da tabela serão inseridas aqui -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <div class="c4">
+        <h2 class="udp">Grafico Portas <br> UDP</h2>
+        <div id="chart5" class="chart"></div>
+      </div>
+
+      <div class="c5">
+        <h2 class="tcp">TCP</h2>
+        <div id="chart6" class="chart"></div>
+      </div>
+
+      <div class="c6">
+        <h2 class="http">HTTP</h2>
+        <div id="chart7" class="chart"></div>
+      </div>
+
+      <div class="c7">
+        <h2 class="dns">Top 10 <br> Dominios Dns</h2>
+        <div id="chart8" class="chart"></div>
+      </div>
+
+      <div class="c8">
+        <h2 class="nnmp">SNMP</h2>
+        <div id="chart9" class="chart"></div>
+      </div>
+
+    </div>
+
+    <!--Esharts-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+    <!--JavaScript-->
+    <script type="module" src="index.js"></script>
+  </body>
+</html>

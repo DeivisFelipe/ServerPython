@@ -27,8 +27,8 @@ def capture_http_data():
             host = http_layer.Host.decode() if http_layer.Host else "Unknown Host"
             path = http_layer.Path.decode() if http_layer.Path else "/"
             method = http_layer.Method.decode() if http_layer.Method else "Unknown Method"
-            status_code = int(packet[TCP].sport)  # Simplificação, deve ser adaptado
-            # Armazenar dados
+            status_code = int(packet[TCP].sport) 
+         
             http_data_storage.append(HTTPData(method=method, host=host, path=path, status_code=status_code))
 
 @router.on_event("startup")

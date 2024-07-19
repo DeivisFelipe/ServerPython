@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter
-from scapy.all import rdpcap, SNMP, SNMPvarbind
+from scapy.all import rdpcap, SNMP, SNMPget, SNMPset, SNMPresponse, SNMPnext
+from scapy.layers.inet import IP
 from pydantic import BaseModel
 import threading
 import uvicorn
@@ -7,10 +8,10 @@ import uvicorn
 app = FastAPI()
 router = APIRouter(prefix="/kaio_lucas_henrique/snmp", tags=["SNMP Analysis"])
 
-class SNMPData(BaseModel):
-    operation: str
-    response_time: float
-    error_status: int
+class SNMPRequestData(BaseModel):
+    device: str
+    message_type: str
+    count: int
 
 snmp_data_storage = []
 
@@ -18,31 +19,40 @@ pcap_file_path = './pcaps/snmp.pcap'
 
 def analyze_snmp_traffic():
     packets = rdpcap(pcap_file_path)
-    start_times = {}
+    snmp_requests = {}
     for packet in packets:
-        if SNMP in packet:
-            try:
-                pdu = packet[SNMP]
-                if pdu.PDU in [0, 1, 3]:  # GET, GET-NEXT, SET
-                    operation = {0: 'GET', 1: 'GET-NEXT', 3: 'SET'}[pdu.PDU]
-                    request_id = pdu.id
-                    start_times[request_id] = packet.time
-                elif pdu.PDU == 2:  # RESPONSE
-                    request_id = pdu.id
-                    if request_id in start_times:
-                        response_time = packet.time - start_times[request_id]
-                        error_status = pdu.error
-                        snmp_data_storage.append(SNMPData(operation='RESPONSE', response_time=response_time, error_status=error_status))
-            except AttributeError as e:
-                print(f"Error processing packet: {e}")
+        if packet.haslayer(SNMP):
+            snmp_layer = packet[SNMP]
+            device = packet[IP].dst  
+            if SNMPget in packet:
+                message_type = "GET"
+            elif SNMPset in packet:
+                message_type = "SET"
+            elif SNMPresponse in packet:
+                message_type = "RESPONSE"
+            elif SNMPnext in packet:
+                message_type = "NEXT"
+            else:
+                message_type = "OTHER"
+            request_key = (device, message_type)
+            if request_key in snmp_requests:
+                snmp_requests[request_key]['count'] += 1
+            else:
+                snmp_requests[request_key] = {
+                    'device': device,
+                    'message_type': message_type,
+                    'count': 1
+                }
+    for key, value in snmp_requests.items():
+        snmp_data_storage.append(SNMPRequestData(**value))
 
 @router.on_event("startup")
 def start_snmp_analysis():
     thread = threading.Thread(target=analyze_snmp_traffic)
     thread.start()
 
-@router.get("/snmp-data", response_model=list[SNMPData])
-def get_snmp_data():
+@router.get("/snmp-requests", response_model=list[SNMPRequestData])
+def get_snmp_requests():
     return snmp_data_storage
 
 app.include_router(router)

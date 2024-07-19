@@ -6,7 +6,7 @@ import threading
 import uvicorn
 
 app = FastAPI()
-router = APIRouter(prefix="/kaio_lucas_henrique/dns", tags=["DNS Analysis"])
+router = APIRouter(prefix="/kaio_lucas_henrique/dns", tags=["Analysis"])
 
 class DNSQueryData(BaseModel):
     domain: str

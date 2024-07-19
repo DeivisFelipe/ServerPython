@@ -1,50 +1,67 @@
-from fastapi import FastAPI, APIRouter
-from scapy.all import rdpcap, TCP, IP
-from pydantic import BaseModel
-import threading
-import requests
+from fastapi import FastAPI, APIRouter, HTTPException
 import uvicorn
+from scapy.all import IP, TCP, rdpcap
+from datetime import datetime
+from decimal import Decimal
 
 app = FastAPI()
-router = APIRouter(prefix="/kaio_lucas_henrique/tcp", tags=["Analysis"])
+router = APIRouter(prefix="/kaio_lucas_henrique/tcp", tags=["TCP Analysis"])
 
-class ConnectionData(BaseModel):
-    source_ip: str
-    source_location: str
-    destination_ip: str
-    destination_location: str
+class TCPMessage:
+    def __init__(self, timestamp, src_ip, dst_ip, src_port, dst_port, seq, ack, payload_len):
+        self.timestamp = timestamp
+        self.src_ip = src_ip
+        self.dst_ip = dst_ip
+        self.src_port = src_port
+        self.dst_port = dst_port
+        self.seq = seq
+        self.ack = ack
+        self.payload_len = payload_len
 
-geo_data_storage = []
+def extract_tcp_messages(pcap_file):
+    packets = rdpcap(pcap_file)
+    tcp_messages = []
+    for pkt in packets:
+        if IP in pkt and TCP in pkt:
+            ip_layer = pkt[IP]
+            tcp_layer = pkt[TCP]
+            payload_len = len(tcp_layer.payload)
+            tcp_msg = TCPMessage(
+                timestamp=pkt.time,
+                src_ip=ip_layer.src,
+                dst_ip=ip_layer.dst,
+                src_port=tcp_layer.sport,
+                dst_port=tcp_layer.dport,
+                seq=tcp_layer.seq,
+                ack=tcp_layer.ack,
+                payload_len=payload_len
+            )
+            tcp_messages.append(tcp_msg)
+    return tcp_messages
 
 pcap_file_path = './pcaps/tcp.pcap'
+tcp_messages = extract_tcp_messages(pcap_file_path)
 
-def get_location(ip):
-    response = requests.get(f'https://ipapi.co/{ip}/json/')
-    data = response.json()
-    return f"{data['city']}, {data['country_name']}"
+@router.get("/all-data")
+def get_all_tcp_data():
+    traffic_volume = []
+    connection_durations = {}
+    for msg in tcp_messages:
+        timestamp_float = float(Decimal(msg.timestamp))
+        timestamp_formatted = datetime.utcfromtimestamp(timestamp_float).strftime('%Y-%m-%d %H:%M:%S')
+        traffic_volume.append({"timestamp": timestamp_formatted, "payload_len": msg.payload_len})
 
-def capture_tcp_geo_data():
-    packets = rdpcap(pcap_file_path)
-    for packet in packets:
-        if IP in packet and TCP in packet:
-            source_location = get_location(packet[IP].src)
-            destination_location = get_location(packet[IP].dst)
-            connection = {
-                'source_ip': packet[IP].src,
-                'source_location': source_location,
-                'destination_ip': packet[IP].dst,
-                'destination_location': destination_location
-            }
-            geo_data_storage.append(connection)
+        connection_key = f"{msg.src_ip}:{msg.dst_ip}:{msg.src_port}:{msg.dst_port}"
+        if connection_key not in connection_durations:
+            connection_durations[connection_key] = timestamp_float
+        else:
+            duration = timestamp_float - connection_durations[connection_key]
+            connection_durations[connection_key] = duration  
 
-@router.on_event("startup")
-def start_tcp_geo_capture():
-    thread = threading.Thread(target=capture_tcp_geo_data)
-    thread.start()
-
-@router.get("/connection-data", response_model=list[ConnectionData])
-def get_connection_data():
-    return geo_data_storage
+    return {
+        "traffic_volume": traffic_volume,
+        "connection_durations": connection_durations
+    }
 
 app.include_router(router)
 

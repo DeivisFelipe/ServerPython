@@ -1,3 +1,6 @@
 __pycache__
 analisador/__pycache__
 .history
+.vscode
+.idea
+.github

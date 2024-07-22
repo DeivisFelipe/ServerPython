@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise Detalhada de Mensagens RIP</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+<style>
+    .chart {
+        width: 100%;
+        height: 400px;
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+<h1>Análise Detalhada de Mensagens RIP</h1>
+<div id="totalMessagesChart" class="chart"></div>
+<div id="detailedMessagesChart" class="chart"></div>
+<div id="failuresChart" class="chart"></div>
+
+<script>
+    function initChart(chartId, option) {
+        const chart = echarts.init(document.getElementById(chartId));
+        chart.setOption(option);
+        return chart;
+    }
+
+    function updateCharts(data) {
+       
+        const totalData = [
+            { value: data.requests, name: 'Requests' },
+            { value: data.responses, name: 'Responses' }
+        ];
+        const pieOption = {
+            title: { text: 'Total Requests e Responses' },
+            tooltip: { trigger: 'item' },
+            legend: { top: '5%', left: 'center' },
+            series: [
+                {
+                    name: 'Type of Messages',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    data: totalData
+                }
+            ]
+        };
+        initChart('totalMessagesChart', pieOption);
+
+       
+        const detailedData = data.message_details.map(item => ({
+            name: item.command_type,
+            value: [item.timestamp, item.command_type]
+        }));
+        const scatterOption = {
+            title: { text: 'Análise detalhada de mensagens' },
+            tooltip: { trigger: 'item' },
+            xAxis: { type: 'time' },
+            yAxis: {
+                type: 'category',
+                data: ['Request', 'Response'],
+                boundaryGap: true
+            },
+            series: [{
+                name: 'Command Type',
+                type: 'scatter',
+                encode: { x: 0, y: 1 },
+                data: detailedData
+            }]
+        };
+        initChart('detailedMessagesChart', scatterOption);
+
+       
+        const failureData = Object.keys(data.failures).map(key => ({
+            name: key,
+            value: data.failures[key]
+        }));
+        const barOption = {
+            title: { text: 'Failure Visualization' },
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }},
+            xAxis: {
+                type: 'value'
+            },
+            yAxis: {
+                type: 'category',
+                data: failureData.map(item => item.name)
+            },
+            series: [{
+                name: 'Failures',
+                type: 'bar',
+                data: failureData
+            }]
+        };
+        initChart('failuresChart', barOption);
+    }
+
+    function fetchRIPData() {
+        fetch('http://127.0.0.1:3001/kaio_lucas_henrique/rip/all-data')
+            .then(response => response.json())
+            .then(data => updateCharts(data))
+            .catch(error => console.error('Error fetching RIP data:', error));
+    }
+
+    fetchRIPData();
+</script>
+</body>
+</html>

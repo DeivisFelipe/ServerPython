@@ -45,15 +45,15 @@ def contar_informacoes_dns(file):
 
     # Retornar contadores com as informações coletadas
     return {
-        'query_counts': query_counts,
-        'answer_counts': answer_counts,
-        'authority_counts': authority_counts,
-        'additional_counts': additional_counts,
-        'query_names': query_names,
-        'response_names': response_names,
-        'query_types': query_types,
-        'response_types': response_types,
-        'response_codes': response_codes
+        'query_counts': query_counts.most_common(5),
+        'answer_counts': answer_counts.most_common(5),
+        'authority_counts': authority_counts.most_common(5),
+        'additional_counts': additional_counts.most_common(5),
+        'query_names': query_names.most_common(5),
+        'response_names': response_names.most_common(5),
+        'query_types': query_types.most_common(5),
+        'response_types': response_types.most_common(5),
+        'response_codes': response_codes.most_common(5)
     }
 
 # Nome do arquivo PCAP capturado
@@ -64,37 +64,37 @@ informacoes_dns = contar_informacoes_dns(file)
 
 # Exibir os resultados
 print("\nContagem de Consultas DNS:")
-for query_count, count in informacoes_dns['query_counts'].items():
+for query_count, count in informacoes_dns['query_counts']:
     print(f"Consultas: {query_count}, Count: {count}")
 
 print("\nContagem de Respostas DNS:")
-for answer_count, count in informacoes_dns['answer_counts'].items():
+for answer_count, count in informacoes_dns['answer_counts']:
     print(f"Respostas: {answer_count}, Count: {count}")
 
 print("\nContagem de Autoridades DNS:")
-for authority_count, count in informacoes_dns['authority_counts'].items():
+for authority_count, count in informacoes_dns['authority_counts']:
     print(f"Autoridades: {authority_count}, Count: {count}")
 
 print("\nContagem de Adicionais DNS:")
-for additional_count, count in informacoes_dns['additional_counts'].items():
+for additional_count, count in informacoes_dns['additional_counts']:
     print(f"Adicionais: {additional_count}, Count: {count}")
 
 print("\nContagem de Nomes de Consulta DNS:")
-for query_name, count in informacoes_dns['query_names'].items():
+for query_name, count in informacoes_dns['query_names']:
     print(f"Nome de Consulta: {query_name}, Count: {count}")
 
 print("\nContagem de Nomes de Resposta DNS:")
-for response_name, count in informacoes_dns['response_names'].items():
+for response_name, count in informacoes_dns['response_names']:
     print(f"Nome de Resposta: {response_name}, Count: {count}")
 
 print("\nContagem de Tipos de Consulta DNS:")
-for query_type, count in informacoes_dns['query_types'].items():
+for query_type, count in informacoes_dns['query_types']:
     print(f"Tipo de Consulta: {query_type}, Count: {count}")
 
 print("\nContagem de Tipos de Resposta DNS:")
-for response_type, count in informacoes_dns['response_types'].items():
+for response_type, count in informacoes_dns['response_types']:
     print(f"Tipo de Resposta: {response_type}, Count: {count}")
 
 print("\nContagem de Códigos de Resposta DNS:")
-for response_code, count in informacoes_dns['response_codes'].items():
+for response_code, count in informacoes_dns['response_codes']:
     print(f"Código de Resposta: {response_code}, Count: {count}")

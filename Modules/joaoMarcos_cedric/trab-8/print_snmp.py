@@ -5,7 +5,7 @@ def ler_e_imprimir_pacotes_arquivo(file):
     captura_arquivo = pyshark.FileCapture(file, display_filter='snmp')
     print("Pacotes snmp capturados:")
     for pacote in captura_arquivo:
-        print(pacote.dns.field_names)
-        #print(pacote)
+        #print(pacote.snmp.field_names)
+        print(pacote)
 
-ler_e_imprimir_pacotes_arquivo(file='captura_snmp.pcap')
+ler_e_imprimir_pacotes_arquivo(file='snmp.pcap')

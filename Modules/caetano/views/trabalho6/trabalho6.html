@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Trabalho 6</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <script src="trabalho6.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .chart-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Dados de tráfego - Protocolo HTTP</h1>
+    <div>
+        <h2>Gráficos de Tipos de Requisição HTTP</h2>
+        <div class="chart-container">
+            <div id="reqHttp" style="width: 600px; height: 550px;"></div>
+        </div>
+    </div>
+    <div class="analise">
+
+        <h2>Análise</h2>
+        <div>
+            <h2>Resumo de Tráfego HTTP</h2>
+            <table id="table">
+                <tr>
+                    <th>Src IP Address</th>
+                    <th>Dst IP Address</th>
+                    <th>Src Port </th>
+                    <th>Dst Port</th>
+                </tr>
+                <tr>
+
+                </tr>
+            </table>
+        </div>
+
+    </div>
+</body>
+
+</html>

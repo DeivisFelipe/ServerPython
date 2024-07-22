@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WiFi Data Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="col-12">
+            <h2>Total de Flows TCP</h2>
+            <h3 id="totalFlows"></h3>
+        </div>
+        <hr>
+
+        <div class="col-12">
+            <h2>Bytes totais</h2>
+            <h3 id="totalBytes"></h3>
+        </div>
+        <hr>
+        <div class="col-12">
+            <h2>Quantas vezes cada flag aparece no fluxo </h2>
+            <canvas id="flags"></canvas>
+        </div>
+        <div class="col-12">
+            <h2>Quantas vezes cada flag aparece no fluxo em grafico pizza </h2>
+            <canvas id="flagsPizza"></canvas>
+        </div>
+        <hr>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        async function fetchData() {
+            try {
+                let responseApiCall = await axios.get('http://localhost:3001/trabalho5');
+                responseApiCall = responseApiCall.data;
+                let totalFlows = responseApiCall.flows;
+                let totalBytes = responseApiCall.total_bytes;
+                let flags = responseApiCall.flags;
+                console.log(responseApiCall);
+                document.getElementById('totalFlows').innerText = totalFlows;
+                /* TEM AS FLAGS 
+                    ACK	41293
+                    SYN	56876
+                    FIN	617
+                    RST	196
+                    PSH	222
+                    ECE	25
+                    CWR	19
+                */
+                document.getElementById('totalBytes').innerText = totalBytes;
+                let ctx = document.getElementById('flags').getContext('2d');
+                let myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+
+                        datasets: [{
+                            label: 'Quantidade de vezes que a flag aparece no fluxo',
+                            data: flags,
+                            labels: Object.keys(flags),
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.2)',
+                                'rgba(54, 162, 235, 0.2)',
+                                'rgba(255, 206, 86, 0.2)',
+                                'rgba(75, 192, 192, 0.2)',
+                                'rgba(153, 102, 255, 0.2)',
+                                'rgba(255, 159, 64, 0.2)',
+                                'rgba(255, 99, 132, 0.2)',
+                                'rgba(54, 162, 235, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)',
+                                'rgba(255, 159, 64, 1)',
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                let ctxPizza = document.getElementById('flagsPizza').getContext('2d');
+                // Defina os dados e configurações do gráfico
+                const data2 = {
+                    labels: Object.keys(flags),
+                    datasets: [{
+                        data: Object.values(flags),
+                        backgroundColor: [
+                            '#ff6384',
+                            '#36a2eb',
+                            '#cc65fe',
+                            '#ffce56',
+                            '#4bc0c0',
+                            '#ff9f40',
+                            '#9966ff'
+                        ],
+                        hoverBackgroundColor: [
+                            '#ff6384',
+                            '#36a2eb',
+                            '#cc65fe',
+                            '#ffce56',
+                            '#4bc0c0',
+                            '#ff9f40',
+                            '#9966ff'
+                        ]
+                    }]
+                };
+
+                // Crie o gráfico de pizza
+                const myPieChart = new Chart(ctxPizza, {
+                    type: 'pie',
+                    data: data2,
+                    options: {
+                        responsive: true,
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Distribuição de Flags TCP'
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
+                    }
+                });
+
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+        let responseApiCall = fetchData();
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

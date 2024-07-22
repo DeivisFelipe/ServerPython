@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WiFi Data Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="col-12">
+            <h2>Fabricantes dos equipamentos das chamadas</h2>
+            <canvas id="wifiChart" width="400" height="200"></canvas>
+        </div>
+        <hr>
+
+        <div class="col-12">
+            <h2>Portas conhecidas nas chamadas</h2>
+            <canvas id="portChart" width="400" height="200"></canvas>
+        </div>
+        <hr>
+
+    </div>
+    <script>
+        async function fetchData() {
+            const response = await fetch('http://localhost:3001/trabalho4-2');
+            const data = await response.json();
+            return data;
+        }
+
+        async function createChart() {
+            const data = await fetchData();
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+
+            const ctx = document.getElementById('wifiChart').getContext('2d');
+            const wifiChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Quantidade de chamadas',
+                        data: values,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        createChart();
+    </script>
+    <script>
+        async function fetchPortData() {
+            const response = await fetch('http://localhost:3001/trabalho4-1');
+            const data = await response.json();
+            return data;
+        }
+
+        //grafico com os dados:         "service_counts": service_counts, "bytes_per_service": bytes_per_service
+        async function createPortChart() {
+            const data = await fetchPortData();
+            const labels = Object.keys(data['service_counts']);
+            const values = Object.values(data['service_counts']);
+
+            const ctx = document.getElementById('portChart').getContext('2d');
+            const portChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Quantidade de chamadas',
+                        data: values,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        createPortChart();
+
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

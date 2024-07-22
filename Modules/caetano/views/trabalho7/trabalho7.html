@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Trabalho 7</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <script src="trabalho7.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .chart-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+        }
+
+        .form-container {
+            margin-bottom: 20px;
+        }
+
+        #trafficChart {
+            width: 95%;
+            height: 400px;
+        }
+
+        #serviceList {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Dados de tráfego - Protocolo DNS</h1>
+    <div class="analise">
+        <h2>Top 10 sites mais acessados</h2>
+        <div id="sites">
+        </div>
+    </div>
+</body>
+
+</html>

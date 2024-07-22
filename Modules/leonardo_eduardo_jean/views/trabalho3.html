@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIP</title>
+
+    <script src="
+        https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js
+        "></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #map {
+            height: 180px;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-r from-cyan-500 to-blue-500">
+
+   <div class="bg-slate-300 m-7">
+    <div class="w-full mt-10 mx-auto">
+      <div class="border-2 border-black">
+        <h1 class="text-xl">Análise da distribuição de métricas</h1>
+        <div id="main" style="width:100%;height:400px;margin:2rem;"></div>
+      </div>
+      <div class="border-2 border-black">
+        <h1 class="text-xl">Tendência das métricas com o tempo</h1>
+        <div id="main2" style="width:100%;height:400px;margin:2rem;"></div>
+      </div>
+    </div>
+  </div>
+    <script type="text/javascript">
+        let dataJSON;
+        // Função que faz a requisição fetch para o servidor
+        async function getAnalise() {
+            url = "http://localhost:3001/leonardo_eduardo_jean/rip"
+            const response = await fetch(url);
+            return await response.json();
+        };
+        function setMain(){
+            var grafico = echarts.init(document.getElementById('main'));
+            const data = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16'].map(item => { return { metrica: item, cont: 0 } })
+            dataJSON.forEach((item) => data.find((metrica) => metrica.metrica == item.metric).cont += 1)
+            option = {
+                xAxis: {
+                    data: data.map(item => item.metrica)
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                    data: data.map(item => item.cont),
+                    type: 'bar'
+                    }
+                ]
+            };
+            grafico.setOption(option);
+        };
+        function setMain2(){
+            var grafico2 = echarts.init(document.getElementById('main2'));
+            //get the lowest time from the dataJson
+            const minTime = dataJSON.reduce((acc, item) => item.time < acc ? item.time : acc, dataJSON[0].time)
+            const scatterJson = dataJSON.map(item => { return [item.time - minTime, item.metric] })
+            var option2 = {
+                xAxis: {},
+                yAxis: {},
+                series: [
+                    {
+                    symbolSize: 10,
+                    data: scatterJson,
+                    type: 'scatter'
+                    }
+                ]
+                };
+            grafico2.setOption(option2);
+        }
+        // Função principal, precisa dela para esperar a função getAnalise terminar
+        async function main() {
+            dataJSON = await getAnalise();
+            setMain();
+            setMain2();
+            // Pega o elemento HTML onde o gráfico será exibido
+            
+        }
+        main();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuição de Ips e mapa</title>
+
+    <script src="
+        https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js
+        "></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+    <style>
+        #map {
+            height: 400px;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+
+   <div>
+    <div class="w-8/12 mt-10 mx-auto">
+      <div class="border-2 border-black">
+          <h1 class="text-xl">Gráfico de Ips</h1>
+         <div id="main" style="width: 100%;height:400px;margin:2rem;"></div>
+        <hr class="border-gray-400 w-3/4 mx-auto my-3" />
+        <h2 class="text-left">2. Representação em Mapa</h2>
+        <p>Isso indica a localização de onde os dados foram coletados.</p>
+        <div id="map"></div>
+      </div>
+    </div>
+  </div>
+    <script type="text/javascript">
+        let dataJSON;
+        // Função que faz a requisição fetch para o servidor
+        async function getAnalise() {
+            url = "http://localhost:3001/leonardo_eduardo_jean/ipv4"
+            const response = await fetch(url);
+            return await response.json();
+        }
+        function setMapa(){
+            let config = {
+            minZoom: 1,
+            maxZoom: 18,
+            };
+            // magnification with which the map will start
+            const zoom = 1;
+            // co-ordinates
+            const lat = 52.22977;
+            const lng = 21.01178;
+            const map = L.map("map", config).setView([lat, lng], zoom);
+
+            L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            }).addTo(map);
+            return map;
+        }
+        // Função principal, precisa dela para esperar a função getAnalise terminar
+        async function main() {
+            dataJSON = await getAnalise();
+            const map = await setMapa();
+            const receivers = dataJSON.localizacao.flatMap((local) =>
+                (local.ipDestino.latitude && local.ipDestino.longitude
+                    ? {lat:local.ipDestino.latitude, lng:local.ipDestino.longitude, ip:local.ipDestino.ip}
+                    : [])
+            );
+            const senders = dataJSON.localizacao.flatMap((local) =>
+                (local.ipOrigem.latitude && local.ipOrigem.longitude
+                    ? {lat:local.ipOrigem.latitude, lng:local.ipOrigem.longitude, ip:local.ipOrigem.ip}
+                    : [])
+            );
+            for (const sender of senders) {
+                const {lat, lng, ip} = sender;
+                const popupText = `Ip Origem: ${ip}`;
+                const marker = new L.marker([lat, lng]).bindPopup(popupText).addTo(map);
+            }
+            for (const receiver of receivers) {
+                const {lat, lng, ip} = receiver;
+                const popupText = `Ip Destino: ${ip}`;
+                const marker = new L.marker([lat, lng]).bindPopup(popupText).addTo(map);
+            }
+            
+            // Pega o elemento HTML onde o gráfico será exibido
+            var grafico = echarts.init(document.getElementById('main'));
+            var option = {
+                title: {
+                    text: 'Distribuição de Ipv4',
+                    subtext: 'públicos e privados X destino e origem',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left'
+                },
+                series: [
+                    {
+                    name: 'Access From',
+                    type: 'pie',
+                    radius: '50%',
+                    data:
+                        dataJSON.ips.map((ip) => {
+                            return { value: ip.quantidade, name: ip.tipo }
+                        })
+                        ,
+                    emphasis: {
+                        itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                    }
+                ]
+            };
+            grafico.setOption(option);
+        }
+        main();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Tráfego SNMP</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        .chart-container {
+            width: 90%;
+            height: 400px;
+            margin: auto;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Análise de Tráfego SNMP</h1>
+    <div id="requestsByDevice" class="chart-container"></div>
+    <div id="messageTypes" class="chart-container"></div>
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('http://localhost:3001/kaio_lucas_henrique/snmp/snmp-requests');
+            const data = await response.json();
+            return data;
+        }
+
+        async function main() {
+            const data = await fetchData();
+
+           
+            const requestsByDevice = {};
+            const messageTypes = {};
+
+            data.forEach(item => {
+              
+                if (requestsByDevice[item.device]) {
+                    requestsByDevice[item.device] += item.count;
+                } else {
+                    requestsByDevice[item.device] = item.count;
+                }
+
+                
+                if (messageTypes[item.message_type]) {
+                    messageTypes[item.message_type] += item.count;
+                } else {
+                    messageTypes[item.message_type] = item.count;
+                }
+            });
+
+            
+            createChart('requestsByDevice', 'Requisições por Dispositivo', 'bar', requestsByDevice, 'Dispositivos', 'Quantidade de Requisições');
+            createChart('messageTypes', 'Distribuição de Tipos de Mensagens SNMP', 'pie', messageTypes);
+        }
+
+        function createChart(containerId, title, type, data, xAxisName = '', yAxisName = '') {
+            var chartDom = document.getElementById(containerId);
+            var myChart = echarts.init(chartDom);
+            var option = {
+                title: {
+                    text: title,
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: Object.keys(data),
+                    name: xAxisName
+                },
+                yAxis: {
+                    type: 'value',
+                    name: yAxisName
+                },
+                series: [{
+                    data: Object.values(data).map(value => ({
+                        value: value, name: type === 'pie' ? '' : value
+                    })),
+                    type: type,
+                    name: type === 'pie' ? 'Tipos de Mensagens' : '',
+                }]
+            };
+            if (type === 'pie') {
+                option.tooltip.formatter = '{a} <br/>{b} : {c} ({d}%)';
+                delete option.xAxis;
+                delete option.yAxis;
+                option.series[0].name = 'Tipos de Mensagens';
+            }
+            myChart.setOption(option);
+        }
+
+        main();
+    </script>
+</body>
+</html>

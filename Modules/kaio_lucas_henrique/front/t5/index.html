@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise de Tráfego TCP</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+<style>
+    .chart {
+        width: 100%;
+        height: 400px;
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+<h1>Análise de Tráfego TCP</h1>
+<div id="trafficVolumeChart" class="chart"></div>
+<div id="connectionDurationChart" class="chart"></div>
+
+<script>
+    function initChart(chartId, option) {
+        const chart = echarts.init(document.getElementById(chartId));
+        chart.setOption(option);
+        return chart;
+    }
+    
+    function fetchData() {
+        fetch('http://127.0.0.1:3001/kaio_lucas_henrique/tcp/all-data')
+            .then(response => response.json())
+            .then(data => {
+                
+                const trafficVolumeOption = {
+                    title: { text: 'Volume de Tráfego TCP' },
+                    tooltip: { trigger: 'axis' },
+                    xAxis: { type: 'time' },
+                    yAxis: { type: 'value' },
+                    series: [{
+                        data: data.traffic_volume.map(item => [new Date(item.timestamp), item.payload_len]),
+                        type: 'line'
+                    }]
+                };
+                initChart('trafficVolumeChart', trafficVolumeOption);
+    
+               
+                const connectionDurationOption = {
+                    title: { text: 'Duração das Conexões TCP' },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' }
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: Object.keys(data.connection_durations),
+                        axisTick: { alignWithLabel: true }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLabel: {
+                            formatter: '{value} s'
+                        }
+                    },
+                    series: [{
+                        name: 'Duração',
+                        type: 'bar',
+                        barWidth: '60%',
+                        data: Object.values(data.connection_durations).map(duration => duration.toFixed(2)),
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: '{c} s'
+                        }
+                    }]
+                };
+                initChart('connectionDurationChart', connectionDurationOption);
+            })
+            .catch(error => console.error('Error fetching TCP data:', error));
+    }
+    
+    fetchData();
+    </script>
+</body>
+</html>

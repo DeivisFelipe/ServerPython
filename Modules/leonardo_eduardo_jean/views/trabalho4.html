@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UDP</title>
+
+    <script src="
+        https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js
+        "></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #map {
+            height: 180px;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-r from-cyan-500 to-blue-500">
+
+   <div class="bg-slate-300 m-7">
+    <div class="w-full mt-10 mx-auto">
+      <div class="border-2 border-black">
+          <h1 class="text-xl">Distribuição de Portas</h1>
+        <div id="main" style="width:100%;height:400px;margin:2rem;"></div>
+      </div>
+      <div class="border-2 border-black">
+        <h1 class="text-xl">Portas Mais Acessadas Conhecidas</h1>
+        <div id="main2" style="width:100%;height:400px;margin:2rem;"></div>
+      </div>
+    </div>
+  </div>
+    <script type="text/javascript">
+        var dataJSON;
+        // Função que faz a requisição fetch para o servidor
+        async function getAnalise() {
+            url = "http://localhost:3001/leonardo_eduardo_jean/udp"
+            const response = await fetch(url);
+            return await response.json();
+        }
+        function setMain() {
+        var grafico = echarts.init(document.getElementById('main'));
+        const dataGrafico = [{name: 'Bem conhecidas', cont:0}, {name: 'Registradas', cont:0}, {name: 'Dinâmicas e/ou privadas', cont:0}]
+        dataJSON.forEach((item) => {
+            if(item.destination_port >= 0 && item.destination_port <= 1023){
+                dataGrafico[0].cont += 1
+            }else if(item.destination_port >= 1024 && item.destination_port <= 49151){
+                dataGrafico[1].cont += 1
+            }else{
+                dataGrafico[2].cont += 1
+            }
+        })
+        var option = {
+                title: {
+                    text: 'Distribuição de portas',
+                    subtext: 'Bem conhecidas, Registradas e Dinâmicas e/ou privadas',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left'
+                },
+                series: [
+                    {
+                    name: 'Access From',
+                    type: 'pie',
+                    radius: '50%',
+                    data:
+                        dataGrafico.map((porta) => {
+                            return { value: porta.cont, name: porta.name }
+                        })
+                        ,
+                    emphasis: {
+                        itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                    }
+                ]
+            };
+            grafico.setOption(option);
+        }
+        // Função principal, precisa dela para esperar a função getAnalise terminar
+        function setMain2(){
+            var grafico2 = echarts.init(document.getElementById('main2'));
+            const data = []
+            dataJSON.forEach((item) => {
+                if(item.destination_port < 1024) {
+                    const didFind = data.find((metrica) => metrica.porta == item.destination_port)
+                    didFind ? didFind.cont += 1 : data.push({porta: item.destination_port, cont: 1})
+                }
+            })
+            console.log(data)
+            var option2 = {
+                xAxis: {
+                    data: data.map(item => item.porta)
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                    data: data.map(item => item.cont),
+                    type: 'bar'
+                    }
+                ]
+            };
+            grafico2.setOption(option2);
+        }
+        async function main() {
+            dataJSON = await getAnalise();
+            // Pega o elemento HTML onde o gráfico será exibido
+            setMain();
+            setMain2();
+        }
+        main();
+    </script>
+</body>
+
+</html>

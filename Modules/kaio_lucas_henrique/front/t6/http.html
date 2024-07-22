@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Tráfego HTTP</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        .chart-container {
+            width: 90%;
+            height: 400px;
+            margin: auto;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Visualização de Tráfego HTTP</h1>
+    <div id="requestsByDomain" class="chart-container"></div>
+    <div id="httpMethods" class="chart-container"></div>
+    <div id="httpStatusCodes" class="chart-container"></div>
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('http://localhost:3001/kaio_lucas_henrique/http/http-requests');
+            const data = await response.json();
+            return data;
+        }
+
+        async function main() {
+            const data = await fetchData();
+
+            
+            const requestsByDomain = {};
+            const methods = {};
+            const statusCodes = {};
+
+            data.forEach(item => {
+               
+                if (requestsByDomain[item.host]) {
+                    requestsByDomain[item.host]++;
+                } else {
+                    requestsByDomain[item.host] = 1;
+                }
+
+               
+                if (methods[item.method]) {
+                    methods[item.method]++;
+                } else {
+                    methods[item.method] = 1;
+                }
+
+                
+                if (statusCodes[item.status_code]) {
+                    statusCodes[item.status_code]++;
+                } else {
+                    statusCodes[item.status_code] = 1;
+                }
+            });
+
+          
+            createChart('requestsByDomain', 'Requisições por Domínio', 'bar', requestsByDomain);
+            createChart('httpMethods', 'Métodos HTTP', 'bar', methods);
+            createChart('httpStatusCodes', 'Códigos de Status HTTP', 'bar', statusCodes);
+        }
+
+        function createChart(containerId, title, type, data) {
+            var chartDom = document.getElementById(containerId);
+            var myChart = echarts.init(chartDom);
+            var option = {
+                title: {
+                    text: title
+                },
+                tooltip: {},
+                xAxis: {
+                    type: 'category',
+                    data: Object.keys(data)
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [{
+                    data: Object.values(data),
+                    type: type
+                }]
+            };
+            myChart.setOption(option);
+        }
+
+        main();
+    </script>
+</body>
+</html>
